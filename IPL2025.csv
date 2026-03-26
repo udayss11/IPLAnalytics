@@ -1,0 +1,251 @@
+Team,Name,Role,Bowling Type,Batting Position,Nationality,Priority,Rating
+CSK,MS Dhoni,WK,NA,Middle,India,Top,8
+CSK,Sanju Samson,WK,NA,Opener,India,Top,10
+CSK,Kartik Sharma,WK,NA,Top,India,Mid,8
+CSK,Urvil Patel,WK,NA,Middle,India,Low,8
+CSK,Ruturaj Gaikwad,Batter,NA,Opener,India,Top,10
+CSK,Devald Brevis,Batter,NA,Middle,South Africa,Top,10
+CSK,Ayush Mahtre,Batter,NA,Top,India,Top,9
+CSK,Sarfaraz Khan,Batter,NA,Middle,India,Mid,8
+CSK,Anshul Kamboj,All Rounder,Pace,Lower Middle,India,High,8
+CSK,Jamie Overton,All Rounder,Pace,Lower Middle,England,High,8
+CSK,Ramakrishna Ghosh,All Rounder,Pace,Lower Middle,India,Low,7
+CSK,Prashant Veer,All Rounder,Spin,Middle,India,Mid,8
+CSK,Matthew Short,All Rounder,Pace,Top,Australia,Mid,9
+CSK,Aman Khan,All Rounder,Pace,Middle,India,Low,7
+CSK,Zak Folkes,All Rounder,Pace,Lower Middle,New Zealand,Low,7
+CSK,Shivam Dube,All Rounder,Pace,Middle,India,Top,9
+CSK,Khaleel Ahmed,Bowler,pace,Lower,India,High,9
+CSK,Mukesh Chaudhary,Bowler,pace,Lower,India,Mid,8
+CSK,Nathan Ellis,Bowler,pace,Lower Middle,Australia,High,9
+CSK,Matt Henry,Bowler,pace,Lower,New Zealand,Mid,9
+CSK,Gurjanpreet Singh,Bowler,pace,Lower,India,Low,8
+CSK,Noor Ahmed,Bowler,Spin,Lower,Afghanistan,Top,10
+CSK,Akeal Hossein,Bowler,Spin,Lower Middle,West Indies,Mid,9
+CSK,Shreyas Gopal,Bowler,Spin,Lower,India,Low,7
+CSK,Rahul Chahar,Bowler,Spin,Lower,India,High,9
+DC,KL Rahul,WK,NA,Opener,India,Top,10
+DC,Abhishek Porel,WK,NA,Top,India,Mid,8
+DC,Tristan Stubbs,WK,NA,Middle,South Africa,Top,9
+DC,Ben Duckett,Batter,NA,Opener,England,Mid,9
+DC,Karun Nair,Batter,NA,Middle,India,Mid,8
+DC,David Miller,Batter,NA,Middle,South Africa,High,10
+DC,Pathum Nissanka,Batter,NA,Opener,Sri Lanka,High,10
+DC,Sahil Parakh,Batter,NA,Middle,India,Low,8
+DC,Prithvi Shaw,Batter,NA,Opener,India,Mid,8
+DC,Axar Patel,All Rounder,Spin,Middle,India,Top,10
+DC,Sameer Rizvi,All Rounder,Spin,Top,India,Low,8
+DC,Ashutosh Sharma,All Rounder,Spin,Middle,India,High,9
+DC,Vipraj Nigam,All Rounder,Spin,Lower Middle,India,Top,9
+DC,Ajay Mandal,All Rounder,Spin,Lower Middle,India,Low,8
+DC,Tripurana Vijay,All Rounder,Spin,Middle,India,Low,7
+DC,Madhav Tiwari,All Rounder,Pace,Middle,India,Low,7
+DC,Aaqib Dar,All Rounder,Pace,Lower Middle,India,High,9
+DC,Nitish Rana,Batter,Spin,Top,India,Top,9
+DC,Mitchell Starc,Bowler,Pace,Lower Middle,Australia,Top,10
+DC,T natarajan,Bowler,Pace,Lower,India,High,10
+DC,Mukesh Kumar,Bowler,Pace,Lower,India,High,9
+DC,Lungi Ngidi,Bowler,Pace,Lower,South Africa,High,9
+DC,Kyle Jamieson,Bowler,Pace,Lower Middle,New Zealand,Mid,9
+DC,Dushmanta Chameera,Bowler,Pace,Lower,Sri Lanka,Mid,9
+DC,Kuldeep Yadav,Bowler,Spin,Lower,India,Top,10
+GT,Jos Buttler,WK,NA,Opener,England,Top,10
+GT,Kumar Kushagra,WK,NA,Middle,India,Low,8
+GT,Anuj Rawat,WK,NA,Opener,India,Mid,8
+GT,Tom Banton,WK,NA,Top,England,Mid,8
+GT,Shubman Gill,Batter,NA,Opener,India,Top,10
+GT,Glenn Phillips,All Rounder,NA,Middle,New Zealand,High,10
+GT,Nishant Sindhu,All Rounder,Spin,Middle,India,Mid,8
+GT,Washington Sundar,All Rounder,Spin,Middle,India,Top,9
+GT,Arshad Khan,All Rounder,Pace,Lower Middle,India,Mid,8
+GT,Sai Kishore,All Rounder,Spin,Lower Middle,India,High,9
+GT,Jayant Yadav,All Rounder,Spin,Lower Middle,India,Mid,8
+GT,Jason Holder,All Rounder,Pace,Middle,West Indies,High,8
+GT,Sai Sudarshan,All Rounder,Spin,Top,India,Top,9
+GT,Shah Rukh Khan,All Rounder,Spin,Middle,India,Mid,8
+GT,Rahul Tewatia,All Rounder,Spin,Lower Middle,India,Mid,8
+GT,Rashid Khan,All Rounder,Spin,Lower Middle,Afghanistan,Top,10
+GT,Kagiso Rabada,Bowler,Pace,Lower,South Africa,Top,10
+GT,Mohammed Siraj,Bowler,Pace,Lower,India,Top,10
+GT,Prasidh Krishna,Bowler,Pace,Lower,India,Top,9
+GT,Manav Suthar,Bowler,Spin,Lower,India,Low,7
+GT,Gurnoor Brar,Bowler,Pace,Lower,India,Low,7
+GT,Ishant Sharma,Bowler,Pace,Lower,India,Mid,8
+GT,Ashok Sharma,Bowler,Pace,Lower,India,Low,8
+GT,Prithvi Raj,Bowler,Pace,Lower,India,Low,7
+GT,Luke Wood,Bowler,Pace,Lower,England,Mid,8
+KKR,Finn Allen,WK,NA,Opener,New Zealand,High,9
+KKR,Tejasvi Singh,WK,NA,Middle,India,Low,7
+KKR,Tim Seifert,WK,NA,Opener,New Zealand,Mid,8
+KKR,Ajinkya Rahane,Batter,NA,Top,India,Top,9
+KKR,Angkrish Raghuvanshi,Batter,NA,Opener,India,Top,9
+KKR,Rinku Singh,Batter,NA,Middle,India,Top,9
+KKR,Manish Pandey ,Batter,NA,Middle,India,Mid,9
+KKR,Rahul Tripathi,Batter,NA,Top,India,Mid,8
+KKR,Rovman Powell,All Rounder,Pace,Middle,West Indies,Mid,9
+KKR,Cameron Green,All Rounder,Pace,Top,Australia,Top,10
+KKR,Sunil Narine,All Rounder,Spin,Lower Middle,West Indies,Top,10
+KKR,Anukul Roy,All Rounder,Spin,Middle,India,Mid,8
+KKR,Sarthak Ranjan,All Rounder,Spin,Middle,India,Low,8
+KKR,Daksh Kamra,All Rounder,Pace,Middle,India,Low,7
+KKR,Rachin Ravindra,All Rounder,Spin,Top,New Zealand,Mid,10
+KKR,Ramandeep Singh,All Rounder,Spin,Lower Middle,India,Mid,8
+KKR,Vaibhav Arora,Bowler,Pace,Lower,India,High,9
+KKR,Matheesha Pathirana,Bowler,Pace,Lower,Sri Lanka,High,10
+KKR,kartik Tyagi,Bowler,Pace,Lower,India,Mid,8
+KKR,Prashant Solanki,Bowler,Pace,Lower,India,Low,7
+KKR,Mustafizur Rahman,Bowler,Pace,Lower,Bangladesh,High,9
+KKR,Harshit Rana,Bowler,Pace,Lower Middle,India,Top,9
+KKR,Akash Deep,Bowler,Pace,Lower,India,High,8
+KKR,Umran Malik,Bowler,Pace,Lower,India,Mid,8
+KKR,Varun chakravarthy,Bowler,Spin,Lower,India,Top,10
+LSG,Rishab Pant,WK,NA,Middle,India,Top,9
+LSG,Nicholas Pooran,WK,NA,Top,West Indies,Top,10
+LSG,Josh Inglis,WK,NA,Opener,Australia,Mid,8
+LSG,Mukul Choudhary,WK,NA,Top,India,Low,7
+LSG,Mitchell Marsh,Batter,NA,Opener,Australia,Top,10
+LSG,Himmat Singh,Batter,NA,Opener,India,Mid,8
+LSG,Matthew Breetzke,Batter,NA,Middle,South Africa,Mid,8
+LSG,Akshat Raghuwanshi,Batter,NA,Middle,India,High,8
+LSG,Aiden Markram,All Rounder,Spin,Opener,South Africa,Top,9
+LSG,Abdul Samad,All Rounder,Spin,Middle,India,Mid,8
+LSG,Shahbaz Ahmed,All Rounder,Spin,Lower Middle,India,Mid,8
+LSG,Arshin Kulkarni,All Rounder,Pace,Lower Middle,India,Mid,8
+LSG,Wanindu Hasaranga,All Rounder,Spin,Lower Middle,Sri Lanka,Mid,10
+LSG,Ayush Badoni,All Rounder,Spin,Middle,India,Top,9
+LSG,Mohammad Shami,Bowler,Pace,Lower,India,Top,10
+LSG,Avesh Khan,Bowler,Pace,Lower,India,High,9
+LSG,M Siddharth,Bowler,Pace,Lower,India,High,8
+LSG,Digvesh Singh,Bowler,Spin,Lower,India,High,9
+LSG,Akash Singh,Bowler,Pace,Lower,India,Mid,8
+LSG,Arjun Tendulkar,Bowler,Pace,Lower,India,Mid,8
+LSG,Anrich Nortje,Bowler,Pace,Lower,South Africa,High,10
+LSG,Mohsin Khan,Bowler,Pace,Lower,India,Mid,9
+LSG,Naman Tiwari,Bowler,Pace,Lower,India,Low,8
+LSG,Prince Yadav,Bowler,Pace,Lower,India,Mid,8
+LSG,Mayank Yadav,Bowler,Pace,Lower,India,High,9
+MI,Ryan Rickelton,WK,NA,Opener,South Africa,Mid,9
+MI,Robin Minz,WK,NA,Top,India,Low,7
+MI,Quinton De Kock,WK,NA,Opener,South Africa,High,10
+MI,Rohit Sharma,Batter,NA,Opener,India,Top,10
+MI,SuryaKumar Yadav,Batter,NA,Top,India,Top,10
+MI,Tilak Varma,Batter,NA,Top,India,Top,10
+MI,Sherfane Rutherforde,Batter,NA,Middle,West Indies,Mid,8
+MI,Danish Malewar,Batter,NA,Top,India,Low,7
+MI,Hardik Pandya,All Rounder,Pace,Middle,India,Top,10
+MI,Naman Dhir,All Rounder,Spin,Middle,India,High,8
+MI,Mitchell Santner,All Rounder,Spin,Lower Middle,New Zealand,High,8
+MI,Raj Angad Bawa,All Rounder,Spin,Lower Middle,India,Mid,8
+MI,Atharva Ankolekar,All Rounder,Spin,Lower Middle,India,Low,8
+MI,Mayank Rawat,All Rounder,Spin,Lower Middle,India,Mid,7
+MI,Corbin Bosch,All Rounder,Pace,Middle,South Africa,Mid,9
+MI,Will Jacks,All Rounder,Spin,Top,England,High,10
+MI,Shardul Thakur,All Rounder,Pace,Lower Middle,India,High,9
+MI,Trent Boult,Bowler,Pace,Lower,New Zealand,Top,10
+MI,Mayank Markande,Bowler,Spin,Lower,India,Mid,8
+MI,Deepak Chahar,Bowler,Pace,Lower ,India,High,9
+MI,Ashwani Kumar,Bowler,Spin,Lower,India,Mid,8
+MI,Raghu Sharma,Bowler,Spin,Lower,India,Low,7
+MI,Jasprit Bumrah,Bowler,Pace,Lower,India,Top,10
+MI,Allah Ghazanfar,Bowler,Spin,Lower,Afghanistan,Mid,9
+MI,Mohammad Izhar,Bowler,Pace,Lower,India,Low,7
+PBKS,Prabhsimran Singh,WK,NA,Opener,India,Top,9
+PBKS,Vishnu Vinod,WK,NA,Middle,India,Mid,8
+PBKS,Shreyas Iyer,Batter,NA,Top,India,Top,10
+PBKS,Priyansh Arya,Batter,NA,Opener,India,Top,9
+PBKS,Nehal Wadhera,Batter,NA,Top,India,Mid,9
+PBKS,Harnoor Pannu,Batter,NA,Middle,India,Low,8
+PBKS,Shashank Singh,Batter,NA,Middle,India,Top,9
+PBKS,Pyla Avinash,Batter,NA,Middle,India,Low,7
+PBKS,Marcus Stoinis,All Rounder,Pace,Top,Australia,Top,10
+PBKS,Harpreet Brar,All Rounder,Spin,Lower Middle,India,High,9
+PBKS,Marco Jansen,All Rounder,Pace,Lower ,South Africa,Top,10
+PBKS,Azmatullah Omarzai,All Rounder,Pace,Middle,Afghanistan,High,9
+PBKS,Musheer Khan,All Rounder,Spin,Middle,India,Mid,7
+PBKS,Suryansh Shedge,All Rounder,Spin,Lower,India,Mid,7
+PBKS,Cooper Connolly,All Rounder,Spin,Middle,Australia,Mid,8
+PBKS,Mitch Owen,All Rounder,Spin,Top,Australia,Mid,9
+PBKS,Ben Dwarshius,All Rounder,Pace,Lower Middle,Australia,Mid,9
+PBKS,Arshdeep Singh,Bowler,Pace,Lower,India,Top,10
+PBKS,Yuzvendra Chahal,Bowler,Spin,Lower,India,Top,10
+PBKS,Vyshak Vijaykumar,Bowler,Pace,Lower,India,Mid,8
+PBKS,Yash Thakur,Bowler,Pace,Lower,India,High,9
+PBKS,Xavier Bartlett,Bowler,Pace,Lower,Australia,Mid,9
+PBKS,Pravin Dubey,Bowler,Spin,Lower,India,Mid,9
+PBKS,Vishal Nishad,Bowler,Pace,Lower,India,Low,7
+PBKS,Lockie Ferguson,Bowler,Pace,Lower,New Zealand,High,9
+RR,Donovan Ferreira,WK,NA,Opener,South Africa,Mid,9
+RR,Dhruv Jurel,WK,NA,Top,India,Top,9
+RR,Ravi Singh,WK,NA,Middle,India,Mid,7
+RR,Yashasvi Jaiswal,Batter,NA,Opener,India,Top,10
+RR,Shubham Dubey,Batter,NA,Top,India,Mid,8
+RR,Vaibhav Suryavanshi,Batter,NA,Opener,India,Top,9
+RR,Lhuan Dre Pretorius,Batter,NA,Middle,South Africa,Mid,8
+RR,Aman Rao Perala,Batter,NA,Middle,India,Low,7
+RR,Shimron Hetmyer,Batter,NA,Middle,West Indies,High,8
+RR,Riyan Parag,All Rounder,Spin,Middle,India,Top,9
+RR,Yudhvir Singh Charak,All Rounder,Spin,Middle,India,Mid,8
+RR,Ravindra Jadeja,All Rounder,Spin,Middle,India,Top,10
+RR,Sam Curran,All Rounder,Pace,Middle,England,Top,10
+RR,Jofra Archer,Bowler,Pace,Lower Middle,England,Top,10
+RR,Tushar Deshpande,Bowler,Pace,Lower,India,High,8
+RR,Kwena Maphaka,Bowler,Pace,Lower,South Africa,Mid,8
+RR,Ravi Bishnoi,Bowler,Spin,Lower ,India,Top,10
+RR,Sushant Mishra,Bowler,Pace,Lower,India,Mid,8
+RR,Yash Raj Punja,Bowler,Spin,Lower,India,Mid,8
+RR,Vignesh Puthur,Bowler,Spin,Lower,India,Mid,9
+RR,Brijesh Sharma,Bowler,Spin,Lower,India,Mid,7
+RR,Adam Milne,Bowler,Pace,Lower Middle,New Zealand,Mid,8
+RR,Kuldeep Sen,Bowler,Pace,Lower,India,Mid,8
+RR,Sandeep Sharma,Bowler,Pace,Lower,India,Top,9
+RR,Nandre Burger,Bowler,Pace,Lower,South Africa,Mid,9
+RCB,Phil Salt,WK,NA,Opener,England,Top,10
+RCB,Jitesh Sharma,WK,NA,Middle,India,Top,9
+RCB,Jordan Cox,WK,NA,Middle,England,Mid,8
+RCB,Virat Kohli,Batter,NA,Opener,India,Top,10
+RCB,Devdutt Padikkal,Batter,NA,Top,India,Mid,9
+RCB,Rajat Patidar,Batter,NA,Top,India,Top,9
+RCB,Tim David,Batter,NA,Middle,Australia,High,10
+RCB,Krunal Pandya,All Rounder,Spin,Middle,India,Top,10
+RCB,Swapnil Singh,All Rounder,Spin,Middle,India,Low,8
+RCB,Romario Shepeherd,All Rounder,Pace,Middle,West Indies,Mid,9
+RCB,Jacob Bethell,All Rounder,Spin,Top,England,Mid,9
+RCB,Venkatesh Iyer,All Rounder,Pace,Middle,India,High,9
+RCB,Satvik Deswal,All Rounder,Spin,Middle,India,Low,8
+RCB,Mangesh Yadav,All Rounder,Pace,Lower Middle,India,Mid,8
+RCB,Vicky Ostwal,All Rounder,Spin,Top,India,Mid,8
+RCB,Vihaan Malhotra,All Rounder,Spin,Middle,India,Low,7
+RCB,Kanishk Chouhan,All Rounder,Spin,Middle,India,Low,7
+RCB,Josh Hazlewood,Bowler,Pace,Lower,Australia,High,10
+RCB,Rasikh Dar,Bowler,Pace,Lower Middle,India,Mid,8
+RCB,Bhuvneshwar Kumar,Bowler,Pace,Lower Middle,India,Top,9
+RCB,Yash Dayal,Bowler,Pace,Lower,India,High,8
+RCB,Suyash Sharma,Bowler,Spin,Lower,India,High,9
+RCB,Nuwan Thushara,Bowler,Pace,Lower,Sri Lanka,Mid,8
+RCB,Abhinandan Singh,Bowler,Pace,Lower,India,Mid,8
+RCB,Jacob Duffy,Bowler,Pace,Lower,New Zealand,High,9
+SRH,Ishan Kishan,WK,NA,Top,India,Top,10
+SRH,Salil Arora,WK,NA,Middle,India,mid ,8
+SRH,Heinrich Klassen,WK,NA,Middle,South Africa,Top,10
+SRH,Travis Head,Batter,Spin,Opener,Australia,Top,10
+SRH,Aniket Verma,Batter,NA,Middle,India,mid ,8
+SRH,Smaran Ravichandran,Batter,NA,Top,India,Low,8
+SRH,Harshal Patel,All Rounder,Pace,Lower Middle,India,High,9
+SRH,Kamindu Mendis,All Rounder,Spin,Lower Middle,Sri Lanka,mid ,8
+SRH,Harsh Dubey,All Rounder,Spin,Lower Middle,India,mid ,9
+SRH,Brydon Carse,All Rounder,Pace,Middle,England,Low,8
+SRH,Shivang Kumar,All Rounder,Spin,Middle,India,Low,8
+SRH,Krains Fuletra,All Rounder,Spin,Middle,India,Low,7
+SRH,Liam Livingston,All Rounder,Spin,Middle,England,High,9
+SRH,Jack Edwards,All Rounder,Spin,Top,England,mid ,8
+SRH,Abhishek Sharma,All Rounder,Spin,Opener,India,Top,10
+SRH,Nitish Kumar Reddy,All Rounder,Pace,Middle,India,Top,9
+SRH,Pat Cummins ,Bowler,Pace,Lower Middle,Australia,Top,10
+SRH,Zeeshan Ansari,Bowler,Pace,Lower,India,mid ,8
+SRH,Jaydev Unadkat,Bowler,Pace,Lower Middle,India,mid ,9
+SRH,Eshan Malinga,Bowler,Pace,Lower,Sri Lanka,mid ,9
+SRH,Sakib Hussain,Bowler,Pace,Lower,India,Low,8
+SRH,Onkar Tarmale,Bowler,Pace,Lower,India,Low,8
+SRH,Amit Kumar,Bowler,Spin,Lower,India,Low,8
+SRH,Praful Hinge,Bowler,Pace,Lower,India,Low,8
+SRH,Shivam Mavi,Bowler,Pace,Lower,India,mid ,9
