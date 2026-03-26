@@ -87,7 +87,7 @@ def load_squad_data():
 
 @st.cache_data
 def load_match_context_data():
-    matches = pd.read_csv("IPL Matches 2008-2022 (1).csv")
+    matches = pd.read_csv("IPL Matches 2008-2022.csv")
     matches.columns = [c.strip() for c in matches.columns]
 
     needed = ["team1", "team2", "city", "toss_winner", "toss_decision", "winner", "eliminator", "method"]
