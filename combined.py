@@ -425,17 +425,15 @@ def render_hero():
 
 
 def render_metric_tiles(items):
-    html = '<div class="metric-row">'
-    for label, value, sub in items:
-        html += f"""
-        <div class="metric-tile">
-            <div class="metric-label">{label}</div>
-            <div class="metric-value">{value}</div>
-            <div class="metric-sub">{sub}</div>
-        </div>
-        """
-    html += "</div>"
-    st.markdown(html, unsafe_allow_html=True)
+    cols = st.columns(len(items))
+    for col, (label, value, sub) in zip(cols, items):
+        value = str(value) if value is not None else "-"
+        sub = str(sub) if sub is not None else ""
+
+        with col:
+            st.metric(label=label, value=value)
+            if sub:
+                st.caption(sub)
 
 
 def render_section_header(title, emoji=""):
@@ -522,14 +520,6 @@ def render_quick_stats():
         <div class="quick-stat">
             <div class="quick-stat-label">Teams Covered</div>
             <div class="quick-stat-value">{total_teams}</div>
-        </div>
-        <div class="quick-stat">
-            <div class="quick-stat-label">Players in Squad File</div>
-            <div class="quick-stat-value">{total_players}</div>
-        </div>
-        <div class="quick-stat">
-            <div class="quick-stat-label">Historical Matches</div>
-            <div class="quick-stat-value">{total_matches}</div>
         </div>
         <div class="quick-stat">
             <div class="quick-stat-label">Venues Tracked</div>
