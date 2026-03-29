@@ -6,52 +6,529 @@ from sklearn.ensemble import RandomForestClassifier
 st.set_page_config(page_title="IPL Analytics App", layout="wide")
 
 # ============================
-# STYLES
+# PREMIUM UI CSS
 # ============================
 st.markdown("""
 <style>
-.player-card {
-    background: linear-gradient(135deg, #0b1220, #020617);
+:root {
+    --bg: #f6f8fc;
+    --card: rgba(255,255,255,0.82);
+    --card-strong: rgba(255,255,255,0.95);
+    --text: #172033;
+    --muted: #5b6780;
+    --line: rgba(15, 23, 42, 0.08);
+    --shadow: 0 10px 35px rgba(15, 23, 42, 0.10);
+    --shadow-soft: 0 6px 18px rgba(15, 23, 42, 0.08);
+    --accent: #4f46e5;
+    --accent-2: #0ea5e9;
+    --success: #059669;
+    --danger: #dc2626;
+    --warning: #d97706;
+}
+
+html, body, [data-testid="stAppViewContainer"] {
+    background:
+        radial-gradient(circle at top left, rgba(79,70,229,0.08), transparent 30%),
+        radial-gradient(circle at top right, rgba(14,165,233,0.08), transparent 28%),
+        linear-gradient(180deg, #f8fbff 0%, #f4f7fb 100%);
+    color: var(--text);
+}
+
+section.main > div {
+    max-width: 1280px;
+    padding-top: 1.1rem;
+}
+
+[data-testid="stSidebar"] {
+    background: linear-gradient(180deg, #0f172a 0%, #111827 100%);
+    border-right: 1px solid rgba(255,255,255,0.06);
+}
+[data-testid="stSidebar"] * {
+    color: #e5eefc !important;
+}
+[data-testid="stSidebar"] .stRadio label {
+    font-size: 15px;
+}
+[data-testid="stSidebar"] .stRadio div[role="radiogroup"] > label {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.06);
+    padding: 10px 12px;
+    border-radius: 12px;
+    margin-bottom: 8px;
+}
+
+.hero-card {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 45%, #1d4ed8 100%);
+    padding: 28px 30px;
+    border-radius: 24px;
+    color: white;
+    box-shadow: 0 18px 45px rgba(29, 78, 216, 0.18);
+    margin-bottom: 20px;
+}
+.hero-card::after {
+    content: "";
+    position: absolute;
+    inset: auto -40px -40px auto;
+    width: 180px;
+    height: 180px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.08);
+}
+.hero-title {
+    font-size: 42px;
+    font-weight: 800;
+    line-height: 1.1;
+    margin: 0 0 8px 0;
+}
+.hero-subtitle {
+    font-size: 16px;
+    color: rgba(255,255,255,0.86);
+    margin: 0;
+    max-width: 800px;
+}
+
+.section-chip {
+    display: inline-block;
+    padding: 8px 14px;
+    border-radius: 999px;
+    background: rgba(79,70,229,0.10);
+    color: #4338ca;
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 0.02em;
+    margin-bottom: 12px;
+}
+
+.section-title {
+    background: linear-gradient(135deg, rgba(255,255,255,0.92), rgba(255,255,255,0.76));
+    backdrop-filter: blur(8px);
+    border: 1px solid var(--line);
+    box-shadow: var(--shadow-soft);
     padding: 14px 18px;
-    border-radius: 14px;
+    border-radius: 18px;
+    color: var(--text);
+    margin: 18px 0 14px 0;
+    font-weight: 800;
+    font-size: 20px;
+}
+
+.premium-card {
+    background: linear-gradient(180deg, var(--card-strong), var(--card));
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--line);
+    box-shadow: var(--shadow-soft);
+    border-radius: 22px;
+    padding: 18px 18px;
+    margin-bottom: 16px;
+}
+
+.metric-row {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 14px;
+    margin: 12px 0 18px 0;
+}
+.metric-tile {
+    background: linear-gradient(180deg, rgba(255,255,255,0.95), rgba(255,255,255,0.82));
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    box-shadow: var(--shadow-soft);
+    padding: 18px 16px;
+}
+.metric-label {
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+.metric-value {
+    color: var(--text);
+    font-size: 28px;
+    line-height: 1;
+    font-weight: 800;
+}
+.metric-sub {
+    color: var(--muted);
+    margin-top: 8px;
+    font-size: 12px;
+}
+
+.player-card {
+    background: linear-gradient(135deg, #071124 0%, #020617 100%);
+    padding: 14px 18px;
+    border-radius: 18px;
     margin-bottom: 10px;
     color: white;
     display: flex;
     justify-content: space-between;
     align-items: center;
     font-size: 15px;
-    box-shadow: 0 6px 18px rgba(0,0,0,0.35);
+    box-shadow: 0 10px 20px rgba(2,6,23,0.18);
+    border: 1px solid rgba(255,255,255,0.06);
+}
+.player-meta {
+    font-size: 13px;
+    opacity: 0.88;
 }
 .badge {
-    padding: 6px 12px;
+    padding: 7px 13px;
     border-radius: 999px;
-    font-weight: 700;
-    font-size: 12px;
+    font-weight: 800;
+    font-size: 11px;
     color: white;
+    letter-spacing: 0.02em;
 }
 .badge-bat { background: #2563eb; }
 .badge-ar  { background: #059669; }
 .badge-bowl{ background: #dc2626; }
 .badge-wk  { background: #f59e0b; }
-.section-title {
-    padding: 10px 14px;
-    border-radius: 12px;
-    background: #0f172a;
-    color: white;
-    margin: 12px 0;
-    font-weight: 700;
+
+.insight-box {
+    background: linear-gradient(180deg, rgba(239,246,255,0.95), rgba(239,246,255,0.82));
+    border-left: 5px solid #2563eb;
+    border-radius: 16px;
+    padding: 14px 16px;
+    margin: 10px 0;
+    box-shadow: var(--shadow-soft);
 }
-.small-note {
-    color: #475569;
+.strength-box {
+    background: linear-gradient(180deg, rgba(236,253,245,0.95), rgba(236,253,245,0.82));
+    border-left: 5px solid #059669;
+    border-radius: 16px;
+    padding: 14px 16px;
+    margin: 10px 0;
+    box-shadow: var(--shadow-soft);
+}
+.weakness-box {
+    background: linear-gradient(180deg, rgba(254,242,242,0.95), rgba(254,242,242,0.82));
+    border-left: 5px solid #dc2626;
+    border-radius: 16px;
+    padding: 14px 16px;
+    margin: 10px 0;
+    box-shadow: var(--shadow-soft);
+}
+.tip-box {
+    background: linear-gradient(180deg, rgba(255,251,235,0.96), rgba(255,251,235,0.82));
+    border-left: 5px solid #d97706;
+    border-radius: 16px;
+    padding: 14px 16px;
+    margin: 10px 0;
+    box-shadow: var(--shadow-soft);
+}
+
+.compare-bar-wrap {
+    margin: 10px 0 14px 0;
+}
+.compare-label {
     font-size: 13px;
+    font-weight: 700;
+    color: var(--muted);
+    margin-bottom: 6px;
+}
+.compare-bar {
+    width: 100%;
+    height: 14px;
+    background: #e8edf7;
+    border-radius: 999px;
+    overflow: hidden;
+    border: 1px solid rgba(15,23,42,0.06);
+}
+.compare-fill {
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #4f46e5, #0ea5e9);
+}
+
+.stButton > button {
+    border-radius: 14px;
+    border: 1px solid rgba(79,70,229,0.20);
+    background: linear-gradient(180deg, #ffffff, #f8fbff);
+    color: #1f2a44;
+    font-weight: 700;
+    padding: 0.55rem 1rem;
+    box-shadow: var(--shadow-soft);
+}
+.stButton > button:hover {
+    border-color: rgba(79,70,229,0.45);
+    transform: translateY(-1px);
+}
+
+div[data-testid="stMetric"] {
+    background: linear-gradient(180deg, rgba(255,255,255,0.95), rgba(255,255,255,0.82));
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    padding: 14px 14px;
+    box-shadow: var(--shadow-soft);
+}
+
+div[data-testid="stDataFrame"] {
+    background: white;
+    border-radius: 18px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    box-shadow: var(--shadow-soft);
+}
+
+div[role="tablist"] {
+    gap: 8px;
+}
+button[data-baseweb="tab"] {
+    border-radius: 12px !important;
+    background: rgba(255,255,255,0.8) !important;
+    border: 1px solid var(--line) !important;
+    box-shadow: var(--shadow-soft);
+    padding: 10px 16px !important;
+}
+button[data-baseweb="tab"][aria-selected="true"] {
+    background: linear-gradient(180deg, #eef2ff, #e0e7ff) !important;
+    color: #312e81 !important;
+    font-weight: 800 !important;
+}
+
+@media (max-width: 1100px) {
+    .metric-row {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+</style>
+""", unsafe_allow_html=True)
+st.markdown("""
+<style>
+.feature-grid {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 14px;
+    margin: 10px 0 22px 0;
+}
+.feature-card {
+    background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(255,255,255,0.82));
+    border: 1px solid rgba(15,23,42,0.08);
+    border-radius: 22px;
+    padding: 18px 16px;
+    box-shadow: 0 10px 24px rgba(15,23,42,0.08);
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+    animation: fadeUp 0.5s ease both;
+}
+.feature-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 16px 34px rgba(15,23,42,0.12);
+    border-color: rgba(79,70,229,0.18);
+}
+.feature-icon {
+    width: 46px;
+    height: 46px;
+    border-radius: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #eef2ff, #e0f2fe);
+    font-size: 22px;
+    margin-bottom: 12px;
+}
+.feature-title {
+    font-size: 16px;
+    font-weight: 800;
+    color: #172033;
+    margin-bottom: 8px;
+}
+.feature-text {
+    font-size: 13px;
+    color: #5b6780;
+    line-height: 1.5;
+}
+
+.quick-stats {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+    margin: 4px 0 22px 0;
+}
+.quick-stat {
+    background: linear-gradient(180deg, rgba(255,255,255,0.95), rgba(255,255,255,0.84));
+    border: 1px solid rgba(15,23,42,0.08);
+    border-radius: 20px;
+    padding: 16px;
+    box-shadow: 0 8px 20px rgba(15,23,42,0.07);
+    animation: fadeUp 0.6s ease both;
+}
+.quick-stat-label {
+    font-size: 12px;
+    color: #5b6780;
+    font-weight: 700;
+    margin-bottom: 6px;
+}
+.quick-stat-value {
+    font-size: 26px;
+    font-weight: 800;
+    color: #172033;
+}
+
+.welcome-banner {
+    background: linear-gradient(135deg, rgba(79,70,229,0.10), rgba(14,165,233,0.10));
+    border: 1px solid rgba(79,70,229,0.10);
+    border-radius: 20px;
+    padding: 16px 18px;
+    margin: 6px 0 20px 0;
+    box-shadow: 0 8px 18px rgba(15,23,42,0.06);
+    animation: fadeUp 0.45s ease both;
+}
+.welcome-title {
+    font-size: 18px;
+    font-weight: 800;
+    color: #172033;
+    margin-bottom: 6px;
+}
+.welcome-text {
+    font-size: 14px;
+    color: #5b6780;
+    line-height: 1.6;
+}
+
+@keyframes fadeUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0px);
+    }
+}
+
+@media (max-width: 1200px) {
+    .feature-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .quick-stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
 }
 </style>
 """, unsafe_allow_html=True)
 
-st.title("🏏 IPL Analytics App")
-
 # ============================
-# LOAD DATA
+# PREMIUM UI HELPERS
+# ============================
+def render_hero():
+    st.markdown("""
+    <div class="hero-card">
+        <div class="section-chip">PORTFOLIO PROJECT · IPL ANALYTICS</div>
+        <div class="hero-title">🏏 IPL Analytics App</div>
+        <p class="hero-subtitle">
+            Premium cricket analytics dashboard for squad evaluation, venue-aware team building,
+            head-to-head analysis, and multi-factor match winner prediction.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+
+
+def render_metric_tiles(items):
+    cols = st.columns(len(items))
+    for col, (label, value, sub) in zip(cols, items):
+        value = str(value) if value is not None else "-"
+        sub = str(sub) if sub is not None else ""
+
+        with col:
+            st.metric(label=label, value=value)
+            if sub:
+                st.caption(sub)
+
+
+def render_section_header(title, emoji=""):
+    label = f"{emoji} {title}".strip()
+    st.markdown(f'<div class="section-title">{label}</div>', unsafe_allow_html=True)
+
+
+def render_compare_bar(label, value, max_value=100):
+    pct = 0 if max_value == 0 else max(0, min(100, (value / max_value) * 100))
+    st.markdown(f"""
+    <div class="compare-bar-wrap">
+        <div class="compare-label">{label}: {value}</div>
+        <div class="compare-bar">
+            <div class="compare-fill" style="width:{pct}%"></div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+
+def render_text_box(kind, title, content):
+    class_map = {
+        "insight": "insight-box",
+        "strength": "strength-box",
+        "weakness": "weakness-box",
+        "tip": "tip-box"
+    }
+    cls = class_map.get(kind, "insight-box")
+    st.markdown(
+        f'<div class="{cls}"><b>{title}</b><br>{content}</div>',
+        unsafe_allow_html=True
+    )
+def render_feature_cards():
+    st.markdown("""
+    <div class="feature-grid">
+        <div class="feature-card">
+            <div class="feature-icon">📋</div>
+            <div class="feature-title">Single Team Analysis</div>
+            <div class="feature-text">Evaluate a chosen 12-player squad using professional, batting, bowling, and venue-adjusted ratings.</div>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">🤝</div>
+            <div class="feature-title">Head-to-Head Records</div>
+            <div class="feature-text">Compare two teams using historical wins, matchup percentages, and match-by-match records.</div>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">🧭</div>
+            <div class="feature-title">Venue-Based Best XI</div>
+            <div class="feature-text">Generate venue-aware best playing squads based on spin, pace, batting depth, and balance.</div>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">🎯</div>
+            <div class="feature-title">Match Prediction</div>
+            <div class="feature-text">Predict winners using squad ratings, venue fit, toss, head-to-head, and context model factors.</div>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">🏟️</div>
+            <div class="feature-title">Venue Insights</div>
+            <div class="feature-text">Explore pitch type, toss impact, batting-first trends, bowling-first trends, and venue tendencies.</div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+
+def render_welcome_banner():
+    st.markdown("""
+    <div class="welcome-banner">
+        <div class="welcome-title">Welcome to the IPL Analytics Dashboard</div>
+        <div class="welcome-text">
+            Use the left sidebar to switch between analysis modes. This app combines squad-building logic,
+            venue-aware selection, historical records, and a hybrid prediction model in one premium dashboard.
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+
+def render_quick_stats():
+    total_teams = int(df["Team"].nunique())
+    total_players = int(df["Name"].nunique())
+    total_matches = int(len(matches_df))
+    total_venues = int(venue_df["venue"].nunique())
+
+    st.markdown(f"""
+    <div class="quick-stats">
+        <div class="quick-stat">
+            <div class="quick-stat-label">Teams Covered</div>
+            <div class="quick-stat-value">{total_teams}</div>
+        </div>
+        <div class="quick-stat">
+            <div class="quick-stat-label">Venues Tracked</div>
+            <div class="quick-stat-value">{total_venues}</div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+# ============================
+# DATA LOAD
 # ============================
 @st.cache_data
 def load_squad_data():
@@ -81,13 +558,12 @@ def load_squad_data():
     )
 
     squad["Rating"] = pd.to_numeric(squad.get("Rating", 0), errors="coerce").fillna(0)
-
     return squad
 
 
 @st.cache_data
 def load_match_context_data():
-    matches = pd.read_csv("IPL Matches 2008-2022.csv")
+    matches = pd.read_csv("IPL Matches 2008-2022.csv", low_memory=False)
     matches.columns = [c.strip() for c in matches.columns]
 
     needed = ["team1", "team2", "city", "toss_winner", "toss_decision", "winner", "eliminator", "method"]
@@ -115,7 +591,7 @@ matches_df = load_match_context_data()
 venue_df = load_venue_data()
 
 # ============================
-# NORMALIZATION + BASIC HELPERS
+# BASIC HELPERS
 # ============================
 def normalize_text(x):
     return str(x).strip().lower()
@@ -248,7 +724,7 @@ def show_player_card(index_text, row):
         <div class="player-card">
             <div>
                 <b>{index_text} {row['Name']}</b><br>
-                <span style="font-size:13px; opacity:0.9;">
+                <span class="player-meta">
                     {row['Role']} | {row['Batting Position']} | {row['Bowling Type']} | {row['Nationality']} | Rating: {row['Rating']}
                 </span>
             </div>
@@ -631,8 +1107,9 @@ def impact_players(team, team_source_df):
     if not impact_df.empty:
         impact_df = prepare_team_df(impact_df)
     return impact_df
+
 # ============================
-# RATING SYSTEM
+# RATING LOGIC
 # ============================
 def team_metrics(team, impact):
     metrics = {}
@@ -938,9 +1415,7 @@ def match_strength(team, impact):
         "breakdown": breakdown
     }
 
-# ============================
-# GROUND / PITCH FIT RATING
-# ============================
+
 def ground_fit_rating(team, impact, venue_row):
     if venue_row is None:
         return 5.0
@@ -1019,9 +1494,142 @@ def venue_adjusted_team_rating(team, impact, venue_row):
     }
 
 # ============================
+# LLM STYLE EXPLAINER
+# ============================
+def llm_style_squad_explainer(
+    team_name,
+    venue_name,
+    venue_row,
+    xi,
+    impact,
+    professional_rating,
+    breakdown,
+    venue_adjusted_break
+):
+    metrics = breakdown["Metrics"]
+
+    pitch_type = str(venue_row.get("pitch_type", "unknown")).title() if venue_row is not None else "Unknown"
+    better_to = str(venue_row.get("better_to", "unknown")).replace("_", " ").title() if venue_row is not None else "Unknown"
+
+    batting_rating_val = breakdown["Batting Rating"]
+    bowling_rating_val = breakdown["Bowling Rating"]
+    ground_fit = venue_adjusted_break["Ground Fit Rating"]
+    venue_adjusted = venue_adjusted_break["Venue Adjusted Rating"]
+
+    strengths = []
+    weaknesses = []
+    suggestions = []
+    venue_points = []
+
+    if metrics["openers"] >= 2:
+        strengths.append("The squad has a proper opening combination, which gives it a stable start at the top.")
+    if metrics["batting_options"] >= 6:
+        strengths.append("The batting depth is strong, with enough options to absorb collapses and finish innings well.")
+    if metrics["finishers"] >= 1:
+        strengths.append("There is at least one finisher in the middle-to-lower order, which improves end-over scoring potential.")
+    if metrics["spinners"] >= 2:
+        strengths.append("The side has a strong spin unit, which is especially valuable on slower surfaces.")
+    if metrics["pacers"] >= 2:
+        strengths.append("The pace attack has enough depth to cover powerplay and death overs effectively.")
+    if metrics["all_rounders"] >= 2:
+        strengths.append("Multiple all-rounders improve squad balance and provide tactical flexibility.")
+    if metrics["wicketkeepers"] >= 1:
+        strengths.append("The presence of a wicketkeeper-batter adds structural balance to the XI.")
+    if professional_rating >= 8:
+        strengths.append("Overall, this looks like a highly competitive XI with strong structural balance.")
+    elif professional_rating >= 7:
+        strengths.append("This is a well-built squad with a solid overall profile.")
+    if ground_fit >= 8:
+        strengths.append(f"This squad is exceptionally well suited to {venue_name} based on the pitch profile.")
+
+    if metrics["openers"] < 2:
+        weaknesses.append("The side lacks a clearly defined opening pair, which can create instability at the top.")
+    if metrics["batting_options"] < 6:
+        weaknesses.append("The batting depth is slightly thin, so early wickets could put the middle order under pressure.")
+    if metrics["finishers"] < 1:
+        weaknesses.append("The side does not have a strong finishing profile in the lower middle order.")
+    if metrics["spinners"] < 1:
+        weaknesses.append("The bowling attack lacks spin variety, which can be a problem on slower or turning tracks.")
+    if metrics["pacers"] < 2:
+        weaknesses.append("The pace resources are limited, which can hurt both new-ball and death-over control.")
+    if metrics["all_rounders"] < 1:
+        weaknesses.append("There is limited all-round support, which reduces tactical flexibility.")
+    if metrics["wicketkeepers"] < 1:
+        weaknesses.append("The XI structure is incomplete because there is no wicketkeeper presence.")
+    if metrics["bowling_options"] < 5:
+        weaknesses.append("The bowling depth is below ideal, increasing dependence on a small core of bowlers.")
+    if metrics["top3_share"] > 0.45:
+        weaknesses.append("The batting quality is too concentrated in the top three, so the team may be overdependent on a few players.")
+    if metrics["bottom3_avg"] < 5.5:
+        weaknesses.append("The lower end of the XI looks weak on rating average, which affects depth and recovery ability.")
+    if professional_rating < 6.5:
+        weaknesses.append("Overall squad quality is below ideal and the XI may struggle against stronger opposition.")
+    if ground_fit < 6:
+        weaknesses.append(f"This squad is not naturally suited to the conditions at {venue_name}.")
+
+    if venue_row is not None:
+        venue_pitch = normalize_text(str(venue_row.get("pitch_type", "")))
+        if venue_pitch == "spin":
+            if metrics["spinners"] >= 2:
+                venue_points.append(f"{venue_name} is a spin-friendly venue, and this squad has enough spin resources to exploit those conditions.")
+            else:
+                venue_points.append(f"{venue_name} generally rewards spin bowling, but this squad may be slightly underprepared in that department.")
+        elif venue_pitch == "pace":
+            if metrics["pacers"] >= 3:
+                venue_points.append(f"{venue_name} offers pace assistance, and this XI has enough seam resources to take advantage of it.")
+            else:
+                venue_points.append(f"{venue_name} can reward pacers, but this squad may need a stronger seam attack for ideal balance.")
+        elif venue_pitch == "batting":
+            if metrics["batting_options"] >= 7:
+                venue_points.append(f"{venue_name} is batting friendly, and this squad has the depth to post or chase large totals.")
+            else:
+                venue_points.append(f"{venue_name} tends to produce high-scoring games, so a little more batting depth would improve suitability.")
+        elif venue_pitch == "slow":
+            if metrics["spinners"] >= 2 and metrics["all_rounders"] >= 1:
+                venue_points.append(f"{venue_name} is on the slower side, and this squad is reasonably equipped with spin and control options.")
+            else:
+                venue_points.append(f"{venue_name} can be slow and tactical, but this XI may need more spin or control options.")
+        elif venue_pitch == "balanced":
+            venue_points.append(f"{venue_name} is relatively balanced, so team structure and execution will matter more than one dominant skill type.")
+
+        if better_to and better_to.lower() not in ["unknown", "nan", "none"]:
+            venue_points.append(f"Historically, teams do better here when they {better_to.lower()}.")
+
+    if venue_row is not None and normalize_text(str(venue_row.get("pitch_type", ""))) in ["spin", "slow"] and metrics["spinners"] < 2:
+        suggestions.append("Consider adding one more spinner or a spin-bowling all-rounder for these conditions.")
+    if venue_row is not None and normalize_text(str(venue_row.get("pitch_type", ""))) == "pace" and metrics["pacers"] < 3:
+        suggestions.append("Consider strengthening the pace attack to improve suitability for this venue.")
+    if venue_row is not None and normalize_text(str(venue_row.get("pitch_type", ""))) == "batting" and metrics["batting_options"] < 7:
+        suggestions.append("Adding one more batting option or finisher would improve performance on a batting-friendly pitch.")
+    if metrics["finishers"] < 1:
+        suggestions.append("A more reliable finisher in slots 6 to 8 would improve chase stability and death-over output.")
+    if metrics["all_rounders"] < 1:
+        suggestions.append("Adding an all-rounder would improve balance between batting depth and bowling coverage.")
+    if metrics["bowling_options"] < 5:
+        suggestions.append("The XI needs one more reliable bowling option to reduce pressure on the core attack.")
+    if not suggestions:
+        suggestions.append("This squad is already well balanced; only minor tactical changes would be needed depending on opposition.")
+
+    strengths = strengths[:3] if strengths else ["The squad has a workable overall structure with a few useful positives."]
+    weaknesses = weaknesses[:3] if weaknesses else ["There are no major structural weaknesses, although execution and matchups will still matter."]
+    venue_points = venue_points[:2] if venue_points else [f"The venue profile for {venue_name} does not create any extreme bias for or against this XI."]
+    suggestions = suggestions[:1]
+
+    return {
+        "summary": (
+            f"This squad has a Professional Rating of {professional_rating}/10, a Batting Rating of {batting_rating_val}/10, "
+            f"a Bowling Rating of {bowling_rating_val}/10, a Ground Fit Rating of {ground_fit}/10, "
+            f"and a Venue Adjusted Rating of {venue_adjusted}/10. "
+            f"The selected venue is {venue_name}, which is categorized as a {pitch_type} surface."
+        ),
+        "strengths": strengths,
+        "weaknesses": weaknesses,
+        "venue_points": venue_points,
+        "suggestion": suggestions[0],
+    }
 
 # ============================
-# CONTEXT MODEL
+# CONTEXT / PREDICTION
 # ============================
 @st.cache_resource
 def train_context_model(matches):
@@ -1066,6 +1674,8 @@ def build_context_features(team1, team2, venue, toss_winner, toss_decision="fiel
     row_enc = pd.get_dummies(row, drop_first=False)
     row_enc = row_enc.reindex(columns=context_feature_columns, fill_value=0)
     return row_enc
+
+
 def head_to_head_prob(hist_df, team1, team2):
     t1 = canonical_team_name(team1)
     t2 = canonical_team_name(team2)
@@ -1208,8 +1818,8 @@ def hybrid_prediction(hist_df, venue_df_local, team1_name, xi1, impact1, team2_n
     context1 = h2h1 * 0.25 + v1 * 0.15 + t1 * 0.10 + ml1 * 0.30 + venue_boost1 * 0.20
     context2 = h2h2 * 0.25 + v2 * 0.15 + t2 * 0.10 + ml2 * 0.30 + venue_boost2 * 0.20
 
-    final1 = rating_prob1 * 0.80 + context1 * 0.20
-    final2 = rating_prob2 * 0.80 + context2 * 0.20
+    final1 = rating_prob1 * 0.60 + context1 * 0.40
+    final2 = rating_prob2 * 0.60 + context2 * 0.40
 
     total = final1 + final2
     prob1 = round((final1 / total) * 100, 2) if total > 0 else 50.0
@@ -1248,165 +1858,8 @@ def hybrid_prediction(hist_df, venue_df_local, team1_name, xi1, impact1, team2_n
         "venue_adjusted2": adj2,
     }
 
-def llm_style_squad_explainer(
-    team_name,
-    venue_name,
-    venue_row,
-    xi,
-    impact,
-    professional_rating,
-    breakdown,
-    venue_adjusted_break
-):
-    metrics = breakdown["Metrics"]
-
-    pitch_type = str(venue_row.get("pitch_type", "unknown")).title() if venue_row is not None else "Unknown"
-    better_to = str(venue_row.get("better_to", "unknown")).replace("_", " ").title() if venue_row is not None else "Unknown"
-
-    batting_rating_val = breakdown["Batting Rating"]
-    bowling_rating_val = breakdown["Bowling Rating"]
-    ground_fit = venue_adjusted_break["Ground Fit Rating"]
-    venue_adjusted = venue_adjusted_break["Venue Adjusted Rating"]
-
-    strengths = []
-    weaknesses = []
-    suggestions = []
-    venue_points = []
-
-    # ----------------------------
-    # STRENGTHS
-    # ----------------------------
-    if metrics["openers"] >= 2:
-        strengths.append("The squad has a proper opening combination, which gives it a stable start at the top.")
-    if metrics["batting_options"] >= 6:
-        strengths.append("The batting depth is strong, with enough options to absorb collapses and finish innings well.")
-    if metrics["finishers"] >= 1:
-        strengths.append("There is at least one finisher in the middle-to-lower order, which improves end-over scoring potential.")
-    if metrics["spinners"] >= 2:
-        strengths.append("The side has a strong spin unit, which is especially valuable on slower surfaces.")
-    if metrics["pacers"] >= 2:
-        strengths.append("The pace attack has enough depth to cover powerplay and death overs effectively.")
-    if metrics["all_rounders"] >= 2:
-        strengths.append("Multiple all-rounders improve squad balance and provide tactical flexibility.")
-    if metrics["wicketkeepers"] >= 1:
-        strengths.append("The presence of a wicketkeeper-batter adds structural balance to the XI.")
-    if professional_rating >= 8:
-        strengths.append("Overall, this looks like a highly competitive XI with strong structural balance.")
-    elif professional_rating >= 7:
-        strengths.append("This is a well-built squad with a solid overall profile.")
-    if ground_fit >= 8:
-        strengths.append(f"This squad is exceptionally well suited to {venue_name} based on the pitch profile.")
-
-    # ----------------------------
-    # WEAKNESSES
-    # ----------------------------
-    if metrics["openers"] < 2:
-        weaknesses.append("The side lacks a clearly defined opening pair, which can create instability at the top.")
-    if metrics["batting_options"] < 6:
-        weaknesses.append("The batting depth is slightly thin, so early wickets could put the middle order under pressure.")
-    if metrics["finishers"] < 1:
-        weaknesses.append("The side does not have a strong finishing profile in the lower middle order.")
-    if metrics["spinners"] < 1:
-        weaknesses.append("The bowling attack lacks spin variety, which can be a problem on slower or turning tracks.")
-    if metrics["pacers"] < 2:
-        weaknesses.append("The pace resources are limited, which can hurt both new-ball and death-over control.")
-    if metrics["all_rounders"] < 1:
-        weaknesses.append("There is limited all-round support, which reduces tactical flexibility.")
-    if metrics["wicketkeepers"] < 1:
-        weaknesses.append("The XI structure is incomplete because there is no wicketkeeper presence.")
-    if metrics["bowling_options"] < 5:
-        weaknesses.append("The bowling depth is below ideal, increasing dependence on a small core of bowlers.")
-    if metrics["top3_share"] > 0.45:
-        weaknesses.append("The batting quality is too concentrated in the top three, so the team may be overdependent on a few players.")
-    if metrics["bottom3_avg"] < 5.5:
-        weaknesses.append("The lower end of the XI looks weak on rating average, which affects depth and recovery ability.")
-    if professional_rating < 6.5:
-        weaknesses.append("Overall squad quality is below ideal and the XI may struggle against stronger opposition.")
-    if ground_fit < 6:
-        weaknesses.append(f"This squad is not naturally suited to the conditions at {venue_name}.")
-
-    # ----------------------------
-    # VENUE FIT EXPLANATION
-    # ----------------------------
-    if venue_row is not None:
-        if normalize_text(str(venue_row.get("pitch_type", ""))) == "spin":
-            if metrics["spinners"] >= 2:
-                venue_points.append(f"{venue_name} is a spin-friendly venue, and this squad has enough spin resources to exploit those conditions.")
-            else:
-                venue_points.append(f"{venue_name} generally rewards spin bowling, but this squad may be slightly underprepared in that department.")
-
-        elif normalize_text(str(venue_row.get("pitch_type", ""))) == "pace":
-            if metrics["pacers"] >= 3:
-                venue_points.append(f"{venue_name} offers pace assistance, and this XI has enough seam resources to take advantage of it.")
-            else:
-                venue_points.append(f"{venue_name} can reward pacers, but this squad may need a stronger seam attack for ideal balance.")
-
-        elif normalize_text(str(venue_row.get("pitch_type", ""))) == "batting":
-            if metrics["batting_options"] >= 7:
-                venue_points.append(f"{venue_name} is batting friendly, and this squad has the depth to post or chase large totals.")
-            else:
-                venue_points.append(f"{venue_name} tends to produce high-scoring games, so a little more batting depth would improve suitability.")
-
-        elif normalize_text(str(venue_row.get("pitch_type", ""))) == "slow":
-            if metrics["spinners"] >= 2 and metrics["all_rounders"] >= 1:
-                venue_points.append(f"{venue_name} is on the slower side, and this squad is reasonably equipped with spin and control options.")
-            else:
-                venue_points.append(f"{venue_name} can be slow and tactical, but this XI may need more spin or control options.")
-
-        elif normalize_text(str(venue_row.get("pitch_type", ""))) == "balanced":
-            venue_points.append(f"{venue_name} is relatively balanced, so team structure and execution will matter more than one dominant skill type.")
-
-        if better_to and better_to.lower() not in ["unknown", "nan", "none"]:
-            venue_points.append(f"Historically, teams do better here when they {better_to.lower()}.")
-
-    # ----------------------------
-    # SUGGESTIONS
-    # ----------------------------
-    if metrics["spinners"] < 2 and normalize_text(str(venue_row.get("pitch_type", ""))) in ["spin", "slow"]:
-        suggestions.append("Consider adding one more spinner or a spin-bowling all-rounder for these conditions.")
-    if metrics["pacers"] < 3 and normalize_text(str(venue_row.get("pitch_type", ""))) == "pace":
-        suggestions.append("Consider strengthening the pace attack to improve suitability for this venue.")
-    if metrics["batting_options"] < 7 and normalize_text(str(venue_row.get("pitch_type", ""))) == "batting":
-        suggestions.append("Adding one more batting option or finisher would improve performance on a batting-friendly pitch.")
-    if metrics["finishers"] < 1:
-        suggestions.append("A more reliable finisher in slots 6 to 8 would improve chase stability and death-over output.")
-    if metrics["all_rounders"] < 1:
-        suggestions.append("Adding an all-rounder would improve balance between batting depth and bowling coverage.")
-    if metrics["bowling_options"] < 5:
-        suggestions.append("The XI needs one more reliable bowling option to reduce pressure on the core attack.")
-    if not suggestions:
-        suggestions.append("This squad is already well balanced; only minor tactical changes would be needed depending on opposition.")
-
-    # Keep output controlled
-    strengths = strengths[:3] if strengths else ["The squad has a workable overall structure with a few useful positives."]
-    weaknesses = weaknesses[:3] if weaknesses else ["There are no major structural weaknesses, although execution and matchups will still matter."]
-    venue_points = venue_points[:2] if venue_points else [f"The venue profile for {venue_name} does not create any extreme bias for or against this XI."]
-    suggestions = suggestions[:1]
-
-    summary = (
-        f"**Analyst Summary for {team_name}**\n\n"
-        f"This squad has a **Professional Rating of {professional_rating}/10**, a **Batting Rating of {batting_rating_val}/10**, "
-        f"a **Bowling Rating of {bowling_rating_val}/10**, a **Ground Fit Rating of {ground_fit}/10**, "
-        f"and a **Venue Adjusted Rating of {venue_adjusted}/10**. "
-        f"The selected venue is **{venue_name}**, which is categorized as a **{pitch_type}** surface.\n\n"
-        f"**Top Strengths**\n"
-        f"1. {strengths[0]}\n"
-        f"2. {strengths[1] if len(strengths) > 1 else strengths[0]}\n"
-        f"3. {strengths[2] if len(strengths) > 2 else strengths[-1]}\n\n"
-        f"**Main Weaknesses**\n"
-        f"1. {weaknesses[0]}\n"
-        f"2. {weaknesses[1] if len(weaknesses) > 1 else weaknesses[0]}\n"
-        f"3. {weaknesses[2] if len(weaknesses) > 2 else weaknesses[-1]}\n\n"
-        f"**Venue Fit**\n"
-        f"- {venue_points[0]}\n"
-        f"- {venue_points[1] if len(venue_points) > 1 else venue_points[0]}\n\n"
-        f"**Suggested Improvement**\n"
-        f"- {suggestions[0]}"
-    )
-
-    return summary
 # ============================
-# UI SECTION HELPERS
+# SECTION HELPERS
 # ============================
 def manual_team_selection(team_name, full_df, key_prefix):
     squad_df = full_df[full_df["Team"] == team_name].copy().reset_index(drop=True)
@@ -1503,6 +1956,14 @@ def show_best_squad_for_venue(team_name, full_df, venue_row):
     venue_adj, venue_adj_break = venue_adjusted_team_rating(xi, impact, venue_row)
 
     st.markdown(f"### {team_name}")
+    render_metric_tiles([
+        ("Professional", f"{venue_adj_break['Overall Rating']}/10", "Base team quality"),
+        ("Batting", f"{venue_adj_break['Batting Rating']}/10", "Batting profile"),
+        ("Bowling", f"{venue_adj_break['Bowling Rating']}/10", "Bowling profile"),
+        ("Ground Fit", f"{venue_adj_break['Ground Fit Rating']}/10", "Venue suitability"),
+        ("Venue Adjusted", f"{venue_adj_break['Venue Adjusted Rating']}/10", "Final venue score"),
+    ])
+
     for i, row in xi.iterrows():
         show_player_card(f"{i+1}.", row)
 
@@ -1513,25 +1974,177 @@ def show_best_squad_for_venue(team_name, full_df, venue_row):
     else:
         st.info("No impact players available")
 
-    st.markdown(f"**Ground Fit Rating:** {venue_adj_break['Ground Fit Rating']} / 10")
-    st.markdown(f"**Venue Adjusted Rating:** {venue_adj_break['Venue Adjusted Rating']} / 10")
     explanation = llm_style_squad_explainer(
-    team_name=team_name,
-    venue_name=str(venue_row.get("venue", "Unknown")) if venue_row is not None else "Unknown",
-    venue_row=venue_row,
-    xi=xi,
-    impact=impact,
-    professional_rating=venue_adj_break["Overall Rating"],
-    breakdown=venue_adj_break["Breakdown"],
-    venue_adjusted_break=venue_adj_break
-)
+        team_name=team_name,
+        venue_name=str(venue_row.get("venue", "Unknown")) if venue_row is not None else "Unknown",
+        venue_row=venue_row,
+        xi=xi,
+        impact=impact,
+        professional_rating=venue_adj_break["Overall Rating"],
+        breakdown=venue_adj_break["Breakdown"],
+        venue_adjusted_break=venue_adj_break
+    )
 
-    with st.expander(f"🧠 Explain {team_name} squad"):
-        st.markdown(explanation)
+    with st.expander(f"🧠 Premium analyst view: {team_name}"):
+        render_text_box("insight", "Analyst Summary", explanation["summary"])
+        for s in explanation["strengths"]:
+            render_text_box("strength", "Strength", s)
+        for w in explanation["weaknesses"]:
+            render_text_box("weakness", "Weakness", w)
+        for v in explanation["venue_points"]:
+            render_text_box("insight", "Venue Fit", v)
+        render_text_box("tip", "Suggested Improvement", explanation["suggestion"])
+
+def get_team_match_stats(matches_df, selected_team, venue_filter=None, opponent_filter=None, innings_filter="All"):
+    df_stats = matches_df.copy()
+
+    # standardize team names
+    df_stats["team1_c"] = df_stats["team1"].apply(canonical_team_name)
+    df_stats["team2_c"] = df_stats["team2"].apply(canonical_team_name)
+    df_stats["winner_c"] = df_stats["winner"].apply(canonical_team_name)
+    df_stats["toss_winner_c"] = df_stats["toss_winner"].apply(canonical_team_name)
+
+    selected_team_c = canonical_team_name(selected_team)
+
+    # keep only matches involving selected team
+    df_stats = df_stats[
+        (df_stats["team1_c"] == selected_team_c) |
+        (df_stats["team2_c"] == selected_team_c)
+    ].copy()
+
+    if df_stats.empty:
+        return None, None, None
+
+    # identify opponent
+    df_stats["opponent"] = df_stats.apply(
+        lambda row: row["team2_c"] if row["team1_c"] == selected_team_c else row["team1_c"],
+        axis=1
+    )
+
+    # venue filter
+    if venue_filter and venue_filter != "All":
+        df_stats = df_stats[df_stats["city"].astype(str).str.strip() == venue_filter].copy()
+
+    # opponent filter
+    if opponent_filter and opponent_filter != "All":
+        opp_c = canonical_team_name(opponent_filter)
+        df_stats = df_stats[df_stats["opponent"] == opp_c].copy()
+
+    if df_stats.empty:
+        return None, None, None
+
+    # figure out whether selected team batted first or bowled first
+    # In IPL data, team1 is generally batting first unless toss/decision changes logic in reality,
+    # but for a practical dashboard, we use toss_decision + toss_winner to infer first innings.
+    def team_batting_first(row):
+        toss_winner = row["toss_winner_c"]
+        toss_decision = str(row["toss_decision"]).strip().lower()
+        team1 = row["team1_c"]
+        team2 = row["team2_c"]
+
+        if toss_winner == team1:
+            if toss_decision == "bat":
+                batting_first = team1
+            else:
+                batting_first = team2
+        elif toss_winner == team2:
+            if toss_decision == "bat":
+                batting_first = team2
+            else:
+                batting_first = team1
+        else:
+            batting_first = team1
+
+        return batting_first == selected_team_c
+
+    df_stats["batting_first"] = df_stats.apply(team_batting_first, axis=1)
+    df_stats["bowling_first"] = ~df_stats["batting_first"]
+
+    # innings filter
+    if innings_filter == "Batting First":
+        df_stats = df_stats[df_stats["batting_first"]].copy()
+    elif innings_filter == "Bowling First":
+        df_stats = df_stats[df_stats["bowling_first"]].copy()
+
+    if df_stats.empty:
+        return None, None, None
+
+    # win/loss columns
+    df_stats["won"] = df_stats["winner_c"] == selected_team_c
+    df_stats["lost"] = (~df_stats["won"]) & (df_stats["winner_c"].isin([selected_team_c]) == False)
+
+    # base summary
+    matches_played = len(df_stats)
+    wins = int(df_stats["won"].sum())
+    losses = matches_played - wins
+    win_pct = round((wins / matches_played) * 100, 2) if matches_played > 0 else 0
+
+    toss_wins = int((df_stats["toss_winner_c"] == selected_team_c).sum())
+    toss_win_pct = round((toss_wins / matches_played) * 100, 2) if matches_played > 0 else 0
+
+    batting_first_matches = int(df_stats["batting_first"].sum())
+    bowling_first_matches = int(df_stats["bowling_first"].sum())
+
+    wins_batting_first = int(df_stats[df_stats["batting_first"]]["won"].sum())
+    wins_bowling_first = int(df_stats[df_stats["bowling_first"]]["won"].sum())
+
+    bat_first_win_pct = round((wins_batting_first / batting_first_matches) * 100, 2) if batting_first_matches > 0 else 0
+    bowl_first_win_pct = round((wins_bowling_first / bowling_first_matches) * 100, 2) if bowling_first_matches > 0 else 0
+
+    summary = {
+        "Matches Played": matches_played,
+        "Wins": wins,
+        "Losses": losses,
+        "Win %": win_pct,
+        "Toss Wins": toss_wins,
+        "Toss Win %": toss_win_pct,
+        "Batting First Matches": batting_first_matches,
+        "Bowling First Matches": bowling_first_matches,
+        "Wins Batting First": wins_batting_first,
+        "Wins Bowling First": wins_bowling_first,
+        "Bat First Win %": bat_first_win_pct,
+        "Bowl First Win %": bowl_first_win_pct,
+    }
+
+    # opponent-wise table
+    opp_table = (
+        df_stats.groupby("opponent")
+        .agg(
+            Matches=("opponent", "count"),
+            Wins=("won", "sum")
+        )
+        .reset_index()
+    )
+    opp_table["Losses"] = opp_table["Matches"] - opp_table["Wins"]
+    opp_table["Win %"] = ((opp_table["Wins"] / opp_table["Matches"]) * 100).round(2)
+    opp_table = opp_table.sort_values(["Win %", "Wins"], ascending=[False, False]).reset_index(drop=True)
+
+    # venue-wise table
+    venue_table = (
+        df_stats.groupby("city")
+        .agg(
+            Matches=("city", "count"),
+            Wins=("won", "sum")
+        )
+        .reset_index()
+    )
+    venue_table["Losses"] = venue_table["Matches"] - venue_table["Wins"]
+    venue_table["Win %"] = ((venue_table["Wins"] / venue_table["Matches"]) * 100).round(2)
+    venue_table = venue_table.sort_values(["Win %", "Wins"], ascending=[False, False]).reset_index(drop=True)
+
+    return summary, opp_table, venue_table
 # ============================
-# SIDEBAR MENU
+# APP HEADER + SIDEBAR
 # ============================
-st.sidebar.title("🏏 IPL Analytics App")
+render_hero()
+render_welcome_banner()
+render_quick_stats()
+render_feature_cards()
+
+st.sidebar.markdown("## 🏏 IPL Analytics")
+st.sidebar.caption("Premium portfolio dashboard")
+st.sidebar.markdown("### Navigate")
+
 app_mode = st.sidebar.radio(
     "Choose what you want to do",
     [
@@ -1540,6 +2153,7 @@ app_mode = st.sidebar.radio(
         "Best Playing Squads According to Venue",
         "Match Winner Prediction",
         "Venue Information",
+        "Team Stats Explorer",
     ],
 )
 
@@ -1547,7 +2161,8 @@ app_mode = st.sidebar.radio(
 # MODE 1
 # ============================
 if app_mode == "Single Team Analysis":
-    st.header("Single Team Analysis")
+    render_section_header("Single Team Analysis", "📋")
+    st.caption("Evaluate a selected 12-player squad with venue-aware ratings and analyst-style explanation.")
 
     selected_team = st.selectbox("Select IPL Team", sorted(df["Team"].dropna().unique()), key="single_team")
     single_team_venue = st.selectbox(
@@ -1578,49 +2193,69 @@ if app_mode == "Single Team Analysis":
 
                 rating_user, breakdown = stricter_professional_rating(xi, impact, return_breakdown=True)
                 venue_row = get_venue_row(venue_df, single_team_venue)
-                adj_rating, adj_break = venue_adjusted_team_rating(xi, impact, venue_row)
-                
+                _, adj_break = venue_adjusted_team_rating(xi, impact, venue_row)
 
-                st.markdown("### Your Playing 12")
+                render_metric_tiles([
+                    ("Professional", f"{rating_user}/10", "Overall squad quality"),
+                    ("Batting", f"{breakdown['Batting Rating']}/10", "Batting structure"),
+                    ("Bowling", f"{breakdown['Bowling Rating']}/10", "Bowling resources"),
+                    ("Ground Fit", f"{adj_break['Ground Fit Rating']}/10", "Venue suitability"),
+                    ("Venue Adjusted", f"{adj_break['Venue Adjusted Rating']}/10", "Final venue-aware score"),
+                ])
+
+                render_section_header("Selected Playing 12", "🧾")
                 for i, row in user_df.iterrows():
                     show_player_card(f"{i+1}.", row)
 
-                st.markdown(f"**Professional Team Rating:** {rating_user} / 10")
-                st.markdown(f"**Batting Rating:** {breakdown['Batting Rating']} / 10")
-                st.markdown(f"**Bowling Rating:** {breakdown['Bowling Rating']} / 10")
-                st.markdown(f"**Ground Fit Rating:** {adj_break['Ground Fit Rating']} / 10")
-                st.markdown(f"**Venue Adjusted Rating:** {adj_break['Venue Adjusted Rating']} / 10")
-if st.button("Explain This Squad", key="explain_single_team"):
-    if len(user_sel) != 12:
-        st.error("Please select exactly 12 players first.")
-    else:
-        user_df = team_df.set_index("Name").loc[user_sel].reset_index()
-        xi = user_df.iloc[:11].copy()
-        impact = user_df.iloc[11:].copy()
+                if breakdown.get("Reasons"):
+                    render_section_header("Rating Deductions", "⚠️")
+                    for reason in breakdown["Reasons"]:
+                        render_text_box("weakness", "Weakness", reason)
 
-        rating_user, breakdown = stricter_professional_rating(xi, impact, return_breakdown=True)
-        venue_row = get_venue_row(venue_df, single_team_venue)
-        adj_rating, adj_break = venue_adjusted_team_rating(xi, impact, venue_row)
+                if breakdown.get("Analysis Flags"):
+                    render_section_header("Squad Observations", "🔎")
+                    for flag in breakdown["Analysis Flags"]:
+                        render_text_box("insight", "Observation", flag)
 
-        explanation = llm_style_squad_explainer(
-            team_name=selected_team,
-            venue_name=single_team_venue,
-            venue_row=venue_row,
-            xi=xi,
-            impact=impact,
-            professional_rating=rating_user,
-            breakdown=breakdown,
-            venue_adjusted_break=adj_break
-        )
+        if st.button("Explain This Squad", key="explain_single_team"):
+            if len(user_sel) != 12:
+                st.error("Please select exactly 12 players first.")
+            else:
+                user_df = team_df.set_index("Name").loc[user_sel].reset_index()
+                xi = user_df.iloc[:11].copy()
+                impact = user_df.iloc[11:].copy()
 
-        st.markdown("### 🧠 LLM-Style Squad Explanation")
-        st.markdown(explanation)            
+                rating_user, breakdown = stricter_professional_rating(xi, impact, return_breakdown=True)
+                venue_row = get_venue_row(venue_df, single_team_venue)
+                _, adj_break = venue_adjusted_team_rating(xi, impact, venue_row)
+
+                explanation = llm_style_squad_explainer(
+                    team_name=selected_team,
+                    venue_name=single_team_venue,
+                    venue_row=venue_row,
+                    xi=xi,
+                    impact=impact,
+                    professional_rating=rating_user,
+                    breakdown=breakdown,
+                    venue_adjusted_break=adj_break
+                )
+
+                render_section_header("LLM-Style Squad Explanation", "🧠")
+                render_text_box("insight", "Analyst Summary", explanation["summary"])
+                for s in explanation["strengths"]:
+                    render_text_box("strength", "Strength", s)
+                for w in explanation["weaknesses"]:
+                    render_text_box("weakness", "Weakness", w)
+                for v in explanation["venue_points"]:
+                    render_text_box("insight", "Venue Fit", v)
+                render_text_box("tip", "Suggested Improvement", explanation["suggestion"])
 
 # ============================
 # MODE 2
 # ============================
 elif app_mode == "Teams' Past Head-to-Head Records":
-    st.header("Teams' Past Head-to-Head Records")
+    render_section_header("Teams' Past Head-to-Head Records", "🤝")
+    st.caption("Compare two teams using historical wins, percentages, and match-by-match records.")
 
     col1, col2 = st.columns(2)
     with col1:
@@ -1637,17 +2272,26 @@ elif app_mode == "Teams' Past Head-to-Head Records":
                 st.info("No historical matches found between these teams.")
             else:
                 summary, details = result
-                st.subheader("Head-to-Head Summary")
+                render_metric_tiles([
+                    (team1, f"{summary.iloc[0]['Wins']}", "Head-to-head wins"),
+                    (team2, f"{summary.iloc[1]['Wins']}", "Head-to-head wins"),
+                    ("Total Matches", f"{int(summary['Wins'].sum())}", "Recorded meetings"),
+                    (f"{team1} Win %", f"{summary.iloc[0]['Win %']}%", "Historical share"),
+                    (f"{team2} Win %", f"{summary.iloc[1]['Win %']}%", "Historical share"),
+                ])
+
+                render_section_header("Head-to-Head Summary", "📊")
                 st.dataframe(summary, use_container_width=True)
 
-                st.subheader("Match Details")
+                render_section_header("Match Details", "📋")
                 st.dataframe(details, use_container_width=True)
 
 # ============================
 # MODE 3
 # ============================
 elif app_mode == "Best Playing Squads According to Venue":
-    st.header("Best Playing Squads According to Venue")
+    render_section_header("Best Playing Squads According to Venue", "🧭")
+    st.caption("Generate venue-aware best XIs based on pitch type, balance, and squad suitability.")
 
     selected_venue = st.selectbox(
         "Select Venue",
@@ -1676,7 +2320,8 @@ elif app_mode == "Best Playing Squads According to Venue":
 # MODE 4
 # ============================
 elif app_mode == "Match Winner Prediction":
-    st.header("Match Winner Prediction")
+    render_section_header("Match Winner Prediction", "🎯")
+    st.caption("Prediction combines squad strength, venue fit, toss, head-to-head, and ML context.")
 
     all_teams = sorted(df["Team"].dropna().unique())
     all_venues = venue_df["venue"].dropna().astype(str).str.strip().tolist()
@@ -1749,114 +2394,190 @@ elif app_mode == "Match Winner Prediction":
                     venue, toss_winner, toss_decision,
                 )
 
-                st.subheader("Prediction Result")
-                a, b, c = st.columns(3)
-                with a:
-                    st.metric(f"{team1_name} Win %", f"{result['prob1']}%")
-                with b:
-                    st.metric("Predicted Winner", result["winner"])
-                with c:
-                    st.metric(f"{team2_name} Win %", f"{result['prob2']}%")
+                render_metric_tiles([
+                    (team1_name, f"{result['prob1']}%", "Predicted win probability"),
+                    ("Winner", result["winner"], "Hybrid model output"),
+                    (team2_name, f"{result['prob2']}%", "Predicted win probability"),
+                    ("Venue Fit Edge", f"{result['ground_fit1']} vs {result['ground_fit2']}", "Ground fit comparison"),
+                    ("Rating Edge", f"{result['team1']['overall']} vs {result['team2']['overall']}", "Overall squad rating"),
+                ])
 
-                compare_df = pd.DataFrame({
-                    "Metric": [
-                        "Overall Rating",
-                        "Batting Rating",
-                        "Bowling Rating",
-                        "Ground Fit Rating",
-                        "Venue Adjusted Rating",
-                        "Bench Strength",
-                        "Balance Score",
-                        "Rating Model %",
-                        "Context Model %",
-                        "Head-to-Head %",
-                        "Venue %",
-                        "Toss %",
-                        "ML Context %",
-                        "Venue Sheet Boost %",
-                        "Final Win %",
-                    ],
-                    team1_name: [
-                        result["team1"]["overall"],
-                        result["team1"]["batting"],
-                        result["team1"]["bowling"],
-                        result["ground_fit1"],
-                        result["venue_adjusted1"],
-                        result["team1"]["bench"],
-                        result["team1"]["balance"],
-                        result["rating_prob1"],
-                        result["context_prob1"],
-                        result["h2h1"],
-                        result["venue1"],
-                        result["toss1"],
-                        result["ml1"],
-                        result["venue_boost1"],
-                        result["prob1"],
-                    ],
-                    team2_name: [
-                        result["team2"]["overall"],
-                        result["team2"]["batting"],
-                        result["team2"]["bowling"],
-                        result["ground_fit2"],
-                        result["venue_adjusted2"],
-                        result["team2"]["bench"],
-                        result["team2"]["balance"],
-                        result["rating_prob2"],
-                        result["context_prob2"],
-                        result["h2h2"],
-                        result["venue2"],
-                        result["toss2"],
-                        result["ml2"],
-                        result["venue_boost2"],
-                        result["prob2"],
-                    ],
-                })
+                tab1, tab2, tab3, tab4 = st.tabs(["📊 Ratings", "📈 Win Comparison", "🧠 Insights", "📋 Data Table"])
 
-                st.subheader("Comparison")
-                st.dataframe(compare_df, use_container_width=True)
-if st.button("Explain Both Squads", key="explain_match_squads"):
-    venue_row = get_venue_row(venue_df, venue)
+                with tab1:
+                    c1, c2 = st.columns(2)
+                    with c1:
+                        render_section_header(team1_name, "🟦")
+                        render_compare_bar("Overall Rating", result["team1"]["overall"], 10)
+                        render_compare_bar("Batting Rating", result["team1"]["batting"], 10)
+                        render_compare_bar("Bowling Rating", result["team1"]["bowling"], 10)
+                        render_compare_bar("Ground Fit", result["ground_fit1"], 10)
+                        render_compare_bar("Venue Adjusted", result["venue_adjusted1"], 10)
 
-    team1_overall, team1_breakdown = stricter_professional_rating(xi1, impact1, return_breakdown=True)
-    team1_adj, team1_adj_break = venue_adjusted_team_rating(xi1, impact1, venue_row)
+                    with c2:
+                        render_section_header(team2_name, "🟥")
+                        render_compare_bar("Overall Rating", result["team2"]["overall"], 10)
+                        render_compare_bar("Batting Rating", result["team2"]["batting"], 10)
+                        render_compare_bar("Bowling Rating", result["team2"]["bowling"], 10)
+                        render_compare_bar("Ground Fit", result["ground_fit2"], 10)
+                        render_compare_bar("Venue Adjusted", result["venue_adjusted2"], 10)
 
-    team2_overall, team2_breakdown = stricter_professional_rating(xi2, impact2, return_breakdown=True)
-    team2_adj, team2_adj_break = venue_adjusted_team_rating(xi2, impact2, venue_row)
+                with tab2:
+                    c1, c2 = st.columns(2)
+                    with c1:
+                        render_compare_bar(f"{team1_name} Final Win %", result["prob1"], 100)
+                        render_compare_bar("Rating Model %", result["rating_prob1"], 100)
+                        render_compare_bar("Context Model %", result["context_prob1"], 100)
+                        render_compare_bar("Head-to-Head %", result["h2h1"], 100)
+                        render_compare_bar("Venue %", result["venue1"], 100)
 
-    exp1 = llm_style_squad_explainer(
-        team_name=team1_name,
-        venue_name=venue,
-        venue_row=venue_row,
-        xi=xi1,
-        impact=impact1,
-        professional_rating=team1_overall,
-        breakdown=team1_breakdown,
-        venue_adjusted_break=team1_adj_break
-    )
+                    with c2:
+                        render_compare_bar(f"{team2_name} Final Win %", result["prob2"], 100)
+                        render_compare_bar("Rating Model %", result["rating_prob2"], 100)
+                        render_compare_bar("Context Model %", result["context_prob2"], 100)
+                        render_compare_bar("Head-to-Head %", result["h2h2"], 100)
+                        render_compare_bar("Venue %", result["venue2"], 100)
 
-    exp2 = llm_style_squad_explainer(
-        team_name=team2_name,
-        venue_name=venue,
-        venue_row=venue_row,
-        xi=xi2,
-        impact=impact2,
-        professional_rating=team2_overall,
-        breakdown=team2_breakdown,
-        venue_adjusted_break=team2_adj_break
-    )
+                with tab3:
+                    reasons = []
 
-    col1, col2 = st.columns(2)
-    with col1:
-        st.markdown(f"### 🧠 {team1_name} Explanation")
-        st.markdown(exp1)
-    with col2:
-        st.markdown(f"### 🧠 {team2_name} Explanation")
-        st.markdown(exp2)
+                    if result["ground_fit1"] > result["ground_fit2"] and result["winner"] == team1_name:
+                        reasons.append(f"{team1_name} is better suited to the pitch conditions.")
+                    if result["ground_fit2"] > result["ground_fit1"] and result["winner"] == team2_name:
+                        reasons.append(f"{team2_name} is better suited to the pitch conditions.")
+                    if result["team1"]["overall"] > result["team2"]["overall"] and result["winner"] == team1_name:
+                        reasons.append(f"{team1_name} has the stronger overall squad rating.")
+                    if result["team2"]["overall"] > result["team1"]["overall"] and result["winner"] == team2_name:
+                        reasons.append(f"{team2_name} has the stronger overall squad rating.")
+                    if result["team1"]["bowling"] > result["team2"]["bowling"] and result["winner"] == team1_name:
+                        reasons.append(f"{team1_name} has the stronger bowling attack.")
+                    if result["team2"]["bowling"] > result["team1"]["bowling"] and result["winner"] == team2_name:
+                        reasons.append(f"{team2_name} has the stronger bowling attack.")
+                    if result["team1"]["batting"] > result["team2"]["batting"] and result["winner"] == team1_name:
+                        reasons.append(f"{team1_name} has the stronger batting unit.")
+                    if result["team2"]["batting"] > result["team1"]["batting"] and result["winner"] == team2_name:
+                        reasons.append(f"{team2_name} has the stronger batting unit.")
+
+                    render_text_box(
+                        "strength",
+                        "Prediction Summary",
+                        f"<b>{result['winner']}</b> is the current favorite based on the hybrid model."
+                    )
+
+                    if reasons:
+                        for r in reasons[:4]:
+                            render_text_box("insight", "Key Factor", r)
+
+                    if st.button("Explain Both Squads", key="explain_match_squads"):
+                        team1_overall, team1_breakdown = stricter_professional_rating(xi1, impact1, return_breakdown=True)
+                        _, team1_adj_break = venue_adjusted_team_rating(xi1, impact1, venue_row_match)
+
+                        team2_overall, team2_breakdown = stricter_professional_rating(xi2, impact2, return_breakdown=True)
+                        _, team2_adj_break = venue_adjusted_team_rating(xi2, impact2, venue_row_match)
+
+                        exp1 = llm_style_squad_explainer(
+                            team_name=team1_name,
+                            venue_name=venue,
+                            venue_row=venue_row_match,
+                            xi=xi1,
+                            impact=impact1,
+                            professional_rating=team1_overall,
+                            breakdown=team1_breakdown,
+                            venue_adjusted_break=team1_adj_break
+                        )
+
+                        exp2 = llm_style_squad_explainer(
+                            team_name=team2_name,
+                            venue_name=venue,
+                            venue_row=venue_row_match,
+                            xi=xi2,
+                            impact=impact2,
+                            professional_rating=team2_overall,
+                            breakdown=team2_breakdown,
+                            venue_adjusted_break=team2_adj_break
+                        )
+
+                        c1, c2 = st.columns(2)
+                        with c1:
+                            render_section_header(f"{team1_name} Explanation", "🧠")
+                            render_text_box("insight", "Analyst Summary", exp1["summary"])
+                            for s in exp1["strengths"]:
+                                render_text_box("strength", "Strength", s)
+                            for w in exp1["weaknesses"]:
+                                render_text_box("weakness", "Weakness", w)
+                            render_text_box("tip", "Suggestion", exp1["suggestion"])
+
+                        with c2:
+                            render_section_header(f"{team2_name} Explanation", "🧠")
+                            render_text_box("insight", "Analyst Summary", exp2["summary"])
+                            for s in exp2["strengths"]:
+                                render_text_box("strength", "Strength", s)
+                            for w in exp2["weaknesses"]:
+                                render_text_box("weakness", "Weakness", w)
+                            render_text_box("tip", "Suggestion", exp2["suggestion"])
+
+                with tab4:
+                    compare_df = pd.DataFrame({
+                        "Metric": [
+                            "Overall Rating",
+                            "Batting Rating",
+                            "Bowling Rating",
+                            "Ground Fit Rating",
+                            "Venue Adjusted Rating",
+                            "Bench Strength",
+                            "Balance Score",
+                            "Rating Model %",
+                            "Context Model %",
+                            "Head-to-Head %",
+                            "Venue %",
+                            "Toss %",
+                            "ML Context %",
+                            "Venue Sheet Boost %",
+                            "Final Win %"
+                        ],
+                        team1_name: [
+                            result["team1"]["overall"],
+                            result["team1"]["batting"],
+                            result["team1"]["bowling"],
+                            result["ground_fit1"],
+                            result["venue_adjusted1"],
+                            result["team1"]["bench"],
+                            result["team1"]["balance"],
+                            result["rating_prob1"],
+                            result["context_prob1"],
+                            result["h2h1"],
+                            result["venue1"],
+                            result["toss1"],
+                            result["ml1"],
+                            result["venue_boost1"],
+                            result["prob1"]
+                        ],
+                        team2_name: [
+                            result["team2"]["overall"],
+                            result["team2"]["batting"],
+                            result["team2"]["bowling"],
+                            result["ground_fit2"],
+                            result["venue_adjusted2"],
+                            result["team2"]["bench"],
+                            result["team2"]["balance"],
+                            result["rating_prob2"],
+                            result["context_prob2"],
+                            result["h2h2"],
+                            result["venue2"],
+                            result["toss2"],
+                            result["ml2"],
+                            result["venue_boost2"],
+                            result["prob2"]
+                        ]
+                    })
+                    st.dataframe(compare_df, use_container_width=True)
+
 # ============================
 # MODE 5
 # ============================
 elif app_mode == "Venue Information":
-    st.header("Venue Information")
+    render_section_header("Venue Information", "🏟️")
+    st.caption("Explore pitch type, toss impact, and venue-specific match tendencies.")
 
     selected_venue = st.selectbox(
         "Select Venue",
@@ -1867,19 +2588,89 @@ elif app_mode == "Venue Information":
     row = get_venue_row(venue_df, selected_venue)
 
     if row is not None:
-        c1, c2, c3, c4 = st.columns(4)
-        with c1:
-            st.metric("Pitch Type", str(row.get("pitch_type", "")).title())
-        with c2:
-            toss_val = row.get("toss_win_match_pct", None)
-            st.metric("Toss Win Match %", f"{toss_val:.2f}%" if pd.notna(toss_val) else "N/A")
-        with c3:
-            bat_val = row.get("bat_first_win_pct", None)
-            st.metric("Bat First Win %", f"{bat_val:.2f}%" if pd.notna(bat_val) else "N/A")
-        with c4:
-            bowl_val = row.get("bowl_first_win_pct", None)
-            st.metric("Bowl First Win %", f"{bowl_val:.2f}%" if pd.notna(bowl_val) else "N/A")
+        render_metric_tiles([
+            ("Pitch Type", str(row.get("pitch_type", "")).title(), "Surface nature"),
+            ("Toss Win Match %", f"{row.get('toss_win_match_pct', 0):.2f}%" if pd.notna(row.get("toss_win_match_pct", None)) else "N/A", "Toss impact"),
+            ("Bat First Win %", f"{row.get('bat_first_win_pct', 0):.2f}%" if pd.notna(row.get("bat_first_win_pct", None)) else "N/A", "Bat-first trend"),
+            ("Bowl First Win %", f"{row.get('bowl_first_win_pct', 0):.2f}%" if pd.notna(row.get("bowl_first_win_pct", None)) else "N/A", "Chasing trend"),
+            ("Better To", str(row.get("better_to", "")).title(), "Venue tendency"),
+        ])
 
-        st.markdown("### Full Venue Row")
+        render_section_header("Full Venue Row", "📋")
         st.dataframe(pd.DataFrame([row]), use_container_width=True)
         
+elif app_mode == "Team Stats Explorer":
+    render_section_header("Team Stats Explorer", "📊")
+    st.caption("Explore a team's overall, venue-wise, opponent-wise, and innings-based record with filters.")
+
+    all_teams = sorted(df["Team"].dropna().unique())
+    all_venues = ["All"] + sorted(venue_df["venue"].dropna().astype(str).unique().tolist())
+    all_opponents = ["All"] + all_teams
+
+    col1, col2, col3, col4 = st.columns(4)
+
+    with col1:
+        selected_team = st.selectbox("Select Team", all_teams, key="stats_team")
+
+    with col2:
+        selected_venue = st.selectbox("Select Venue", all_venues, key="stats_venue")
+
+    with col3:
+        selected_opponent = st.selectbox("Select Opponent", all_opponents, key="stats_opponent")
+
+    with col4:
+        innings_filter = st.selectbox(
+            "Match Situation",
+            ["All", "Batting First", "Bowling First"],
+            key="stats_innings_filter"
+        )
+
+    summary, opp_table, venue_table = get_team_match_stats(
+        matches_df,
+        selected_team=selected_team,
+        venue_filter=selected_venue,
+        opponent_filter=selected_opponent,
+        innings_filter=innings_filter
+    )
+
+    if summary is None:
+        st.warning("No records found for the selected filters.")
+    else:
+        render_metric_tiles([
+            ("Matches", summary["Matches Played"], "Total filtered matches"),
+            ("Wins", summary["Wins"], "Matches won"),
+            ("Losses", summary["Losses"], "Matches lost"),
+            ("Win %", f"{summary['Win %']}%", "Success rate"),
+            ("Toss Wins", summary["Toss Wins"], "Tosses won"),
+        ])
+
+        render_metric_tiles([
+            ("Toss Win %", f"{summary['Toss Win %']}%", "Toss success rate"),
+            ("Bat First", summary["Batting First Matches"], "Matches batting first"),
+            ("Bowl First", summary["Bowling First Matches"], "Matches bowling first"),
+            ("Bat First Win %", f"{summary['Bat First Win %']}%", "When batting first"),
+            ("Bowl First Win %", f"{summary['Bowl First Win %']}%", "When bowling first"),
+        ])
+
+        tab1, tab2, tab3 = st.tabs(["📌 Summary", "🤝 Opponent-wise", "🏟️ Venue-wise"])
+
+        with tab1:
+            render_text_box(
+                "insight",
+                "Filter Summary",
+                f"Showing records for <b>{selected_team}</b> | Venue: <b>{selected_venue}</b> | "
+                f"Opponent: <b>{selected_opponent}</b> | Situation: <b>{innings_filter}</b>"
+            )
+
+            render_compare_bar("Win %", summary["Win %"], 100)
+            render_compare_bar("Toss Win %", summary["Toss Win %"], 100)
+            render_compare_bar("Bat First Win %", summary["Bat First Win %"], 100)
+            render_compare_bar("Bowl First Win %", summary["Bowl First Win %"], 100)
+
+        with tab2:
+            render_section_header("Opponent-wise Record", "🤝")
+            st.dataframe(opp_table, use_container_width=True)
+
+        with tab3:
+            render_section_header("Venue-wise Record", "🏟️")
+            st.dataframe(venue_table, use_container_width=True)        
