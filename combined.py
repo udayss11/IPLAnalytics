@@ -1995,6 +1995,144 @@ def show_best_squad_for_venue(team_name, full_df, venue_row):
             render_text_box("insight", "Venue Fit", v)
         render_text_box("tip", "Suggested Improvement", explanation["suggestion"])
 
+def get_team_match_stats(matches_df, selected_team, venue_filter=None, opponent_filter=None, innings_filter="All"):
+    df_stats = matches_df.copy()
+
+    # standardize team names
+    df_stats["team1_c"] = df_stats["team1"].apply(canonical_team_name)
+    df_stats["team2_c"] = df_stats["team2"].apply(canonical_team_name)
+    df_stats["winner_c"] = df_stats["winner"].apply(canonical_team_name)
+    df_stats["toss_winner_c"] = df_stats["toss_winner"].apply(canonical_team_name)
+
+    selected_team_c = canonical_team_name(selected_team)
+
+    # keep only matches involving selected team
+    df_stats = df_stats[
+        (df_stats["team1_c"] == selected_team_c) |
+        (df_stats["team2_c"] == selected_team_c)
+    ].copy()
+
+    if df_stats.empty:
+        return None, None, None
+
+    # identify opponent
+    df_stats["opponent"] = df_stats.apply(
+        lambda row: row["team2_c"] if row["team1_c"] == selected_team_c else row["team1_c"],
+        axis=1
+    )
+
+    # venue filter
+    if venue_filter and venue_filter != "All":
+        df_stats = df_stats[df_stats["city"].astype(str).str.strip() == venue_filter].copy()
+
+    # opponent filter
+    if opponent_filter and opponent_filter != "All":
+        opp_c = canonical_team_name(opponent_filter)
+        df_stats = df_stats[df_stats["opponent"] == opp_c].copy()
+
+    if df_stats.empty:
+        return None, None, None
+
+    # figure out whether selected team batted first or bowled first
+    # In IPL data, team1 is generally batting first unless toss/decision changes logic in reality,
+    # but for a practical dashboard, we use toss_decision + toss_winner to infer first innings.
+    def team_batting_first(row):
+        toss_winner = row["toss_winner_c"]
+        toss_decision = str(row["toss_decision"]).strip().lower()
+        team1 = row["team1_c"]
+        team2 = row["team2_c"]
+
+        if toss_winner == team1:
+            if toss_decision == "bat":
+                batting_first = team1
+            else:
+                batting_first = team2
+        elif toss_winner == team2:
+            if toss_decision == "bat":
+                batting_first = team2
+            else:
+                batting_first = team1
+        else:
+            batting_first = team1
+
+        return batting_first == selected_team_c
+
+    df_stats["batting_first"] = df_stats.apply(team_batting_first, axis=1)
+    df_stats["bowling_first"] = ~df_stats["batting_first"]
+
+    # innings filter
+    if innings_filter == "Batting First":
+        df_stats = df_stats[df_stats["batting_first"]].copy()
+    elif innings_filter == "Bowling First":
+        df_stats = df_stats[df_stats["bowling_first"]].copy()
+
+    if df_stats.empty:
+        return None, None, None
+
+    # win/loss columns
+    df_stats["won"] = df_stats["winner_c"] == selected_team_c
+    df_stats["lost"] = (~df_stats["won"]) & (df_stats["winner_c"].isin([selected_team_c]) == False)
+
+    # base summary
+    matches_played = len(df_stats)
+    wins = int(df_stats["won"].sum())
+    losses = matches_played - wins
+    win_pct = round((wins / matches_played) * 100, 2) if matches_played > 0 else 0
+
+    toss_wins = int((df_stats["toss_winner_c"] == selected_team_c).sum())
+    toss_win_pct = round((toss_wins / matches_played) * 100, 2) if matches_played > 0 else 0
+
+    batting_first_matches = int(df_stats["batting_first"].sum())
+    bowling_first_matches = int(df_stats["bowling_first"].sum())
+
+    wins_batting_first = int(df_stats[df_stats["batting_first"]]["won"].sum())
+    wins_bowling_first = int(df_stats[df_stats["bowling_first"]]["won"].sum())
+
+    bat_first_win_pct = round((wins_batting_first / batting_first_matches) * 100, 2) if batting_first_matches > 0 else 0
+    bowl_first_win_pct = round((wins_bowling_first / bowling_first_matches) * 100, 2) if bowling_first_matches > 0 else 0
+
+    summary = {
+        "Matches Played": matches_played,
+        "Wins": wins,
+        "Losses": losses,
+        "Win %": win_pct,
+        "Toss Wins": toss_wins,
+        "Toss Win %": toss_win_pct,
+        "Batting First Matches": batting_first_matches,
+        "Bowling First Matches": bowling_first_matches,
+        "Wins Batting First": wins_batting_first,
+        "Wins Bowling First": wins_bowling_first,
+        "Bat First Win %": bat_first_win_pct,
+        "Bowl First Win %": bowl_first_win_pct,
+    }
+
+    # opponent-wise table
+    opp_table = (
+        df_stats.groupby("opponent")
+        .agg(
+            Matches=("opponent", "count"),
+            Wins=("won", "sum")
+        )
+        .reset_index()
+    )
+    opp_table["Losses"] = opp_table["Matches"] - opp_table["Wins"]
+    opp_table["Win %"] = ((opp_table["Wins"] / opp_table["Matches"]) * 100).round(2)
+    opp_table = opp_table.sort_values(["Win %", "Wins"], ascending=[False, False]).reset_index(drop=True)
+
+    # venue-wise table
+    venue_table = (
+        df_stats.groupby("city")
+        .agg(
+            Matches=("city", "count"),
+            Wins=("won", "sum")
+        )
+        .reset_index()
+    )
+    venue_table["Losses"] = venue_table["Matches"] - venue_table["Wins"]
+    venue_table["Win %"] = ((venue_table["Wins"] / venue_table["Matches"]) * 100).round(2)
+    venue_table = venue_table.sort_values(["Win %", "Wins"], ascending=[False, False]).reset_index(drop=True)
+
+    return summary, opp_table, venue_table
 # ============================
 # APP HEADER + SIDEBAR
 # ============================
@@ -2015,6 +2153,7 @@ app_mode = st.sidebar.radio(
         "Best Playing Squads According to Venue",
         "Match Winner Prediction",
         "Venue Information",
+        "Team Stats Explorer",
     ],
 )
 
@@ -2459,3 +2598,79 @@ elif app_mode == "Venue Information":
 
         render_section_header("Full Venue Row", "📋")
         st.dataframe(pd.DataFrame([row]), use_container_width=True)
+        
+elif app_mode == "Team Stats Explorer":
+    render_section_header("Team Stats Explorer", "📊")
+    st.caption("Explore a team's overall, venue-wise, opponent-wise, and innings-based record with filters.")
+
+    all_teams = sorted(df["Team"].dropna().unique())
+    all_venues = ["All"] + sorted(venue_df["venue"].dropna().astype(str).unique().tolist())
+    all_opponents = ["All"] + all_teams
+
+    col1, col2, col3, col4 = st.columns(4)
+
+    with col1:
+        selected_team = st.selectbox("Select Team", all_teams, key="stats_team")
+
+    with col2:
+        selected_venue = st.selectbox("Select Venue", all_venues, key="stats_venue")
+
+    with col3:
+        selected_opponent = st.selectbox("Select Opponent", all_opponents, key="stats_opponent")
+
+    with col4:
+        innings_filter = st.selectbox(
+            "Match Situation",
+            ["All", "Batting First", "Bowling First"],
+            key="stats_innings_filter"
+        )
+
+    summary, opp_table, venue_table = get_team_match_stats(
+        matches_df,
+        selected_team=selected_team,
+        venue_filter=selected_venue,
+        opponent_filter=selected_opponent,
+        innings_filter=innings_filter
+    )
+
+    if summary is None:
+        st.warning("No records found for the selected filters.")
+    else:
+        render_metric_tiles([
+            ("Matches", summary["Matches Played"], "Total filtered matches"),
+            ("Wins", summary["Wins"], "Matches won"),
+            ("Losses", summary["Losses"], "Matches lost"),
+            ("Win %", f"{summary['Win %']}%", "Success rate"),
+            ("Toss Wins", summary["Toss Wins"], "Tosses won"),
+        ])
+
+        render_metric_tiles([
+            ("Toss Win %", f"{summary['Toss Win %']}%", "Toss success rate"),
+            ("Bat First", summary["Batting First Matches"], "Matches batting first"),
+            ("Bowl First", summary["Bowling First Matches"], "Matches bowling first"),
+            ("Bat First Win %", f"{summary['Bat First Win %']}%", "When batting first"),
+            ("Bowl First Win %", f"{summary['Bowl First Win %']}%", "When bowling first"),
+        ])
+
+        tab1, tab2, tab3 = st.tabs(["📌 Summary", "🤝 Opponent-wise", "🏟️ Venue-wise"])
+
+        with tab1:
+            render_text_box(
+                "insight",
+                "Filter Summary",
+                f"Showing records for <b>{selected_team}</b> | Venue: <b>{selected_venue}</b> | "
+                f"Opponent: <b>{selected_opponent}</b> | Situation: <b>{innings_filter}</b>"
+            )
+
+            render_compare_bar("Win %", summary["Win %"], 100)
+            render_compare_bar("Toss Win %", summary["Toss Win %"], 100)
+            render_compare_bar("Bat First Win %", summary["Bat First Win %"], 100)
+            render_compare_bar("Bowl First Win %", summary["Bowl First Win %"], 100)
+
+        with tab2:
+            render_section_header("Opponent-wise Record", "🤝")
+            st.dataframe(opp_table, use_container_width=True)
+
+        with tab3:
+            render_section_header("Venue-wise Record", "🏟️")
+            st.dataframe(venue_table, use_container_width=True)
