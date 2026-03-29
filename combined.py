@@ -563,10 +563,10 @@ def load_squad_data():
 
 @st.cache_data
 def load_match_context_data():
-    matches = pd.read_csv("IPL Matches 2008-2022.csv", low_memory=False)
+    matches = pd.read_csv("ipl2026.csv", low_memory=False)
     matches.columns = [c.strip() for c in matches.columns]
 
-    needed = ["team1", "team2", "city", "toss_winner", "toss_decision", "winner", "eliminator", "method"]
+    needed = ["team1", "team2", "city", "toss_winner", "toss_decision", "winner", "Eliminator", "method"]
     matches = matches[needed].copy()
 
     for col in needed:
@@ -1639,10 +1639,10 @@ def train_context_model(matches):
     train_df["toss_winner_c"] = train_df["toss_winner"].apply(canonical_team_name)
     train_df["winner_c"] = train_df["winner"].apply(canonical_team_name)
 
-    train_df["eliminator"] = train_df["eliminator"].replace({"Unknown": "N"}).fillna("N")
+    train_df["Eliminator"] = train_df["Eliminator"].replace({"Unknown": "N"}).fillna("N")
     train_df["method"] = train_df["method"].replace({"Unknown": "normal"}).fillna("normal")
 
-    features = train_df[["team1_c", "team2_c", "city", "toss_winner_c", "toss_decision", "eliminator", "method"]].copy()
+    features = train_df[["team1_c", "team2_c", "city", "toss_winner_c", "toss_decision", "Eliminator", "method"]].copy()
     X = pd.get_dummies(features, drop_first=False)
     y = train_df["winner_c"].copy()
 
@@ -1660,14 +1660,14 @@ def train_context_model(matches):
 context_model, context_feature_columns = train_context_model(matches_df)
 
 
-def build_context_features(team1, team2, venue, toss_winner, toss_decision="field", eliminator="N", method="normal"):
+def build_context_features(team1, team2, venue, toss_winner, toss_decision="field", Eliminator="N", method="normal"):
     row = pd.DataFrame([{
         "team1_c": canonical_team_name(team1),
         "team2_c": canonical_team_name(team2),
         "city": venue,
         "toss_winner_c": canonical_team_name(toss_winner),
         "toss_decision": toss_decision,
-        "eliminator": eliminator,
+        "eliminator": Eliminator,
         "method": method
     }])
 
