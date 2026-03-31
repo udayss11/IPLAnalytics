@@ -738,10 +738,21 @@ def show_player_card(index_text, row):
 # VENUE HELPERS
 # ============================
 def get_venue_row(venue_df_local, venue):
-    row = venue_df_local[venue_df_local["venue"].str.lower() == str(venue).strip().lower()]
+    row = venue_df_local[
+        venue_df_local["venue"].astype(str).str.lower() == str(venue).strip().lower()
+    ]
+
     if row.empty:
-        return None
-    return row.iloc[0]
+        return pd.Series({
+            "venue": str(venue).strip(),
+            "pitch_type": "balanced",
+            "toss_win_match_pct": 50,
+            "bat_first_win_pct": 50,
+            "bowl_first_win_pct": 50,
+            "better_to": "balanced"
+        })
+
+    venue_row = venue_row.iloc[0] if not venue_row.empty else venue_row
 
 
 def player_venue_fit_score(player, venue_row):
@@ -2604,7 +2615,8 @@ elif app_mode == "Team Stats Explorer":
     st.caption("Explore a team's overall, venue-wise, opponent-wise, and innings-based record with filters.")
 
     all_teams = sorted(df["Team"].dropna().unique())
-    all_venues = ["All"] + sorted(venue_df["venue"].dropna().astype(str).unique().tolist())
+    all_venues = sorted(venue_df["venue"].dropna().astype(str).unique().tolist())
+    all_venues.append("Others")
     all_opponents = ["All"] + all_teams
 
     col1, col2, col3, col4 = st.columns(4)
@@ -2614,7 +2626,8 @@ elif app_mode == "Team Stats Explorer":
 
     with col2:
         selected_venue = st.selectbox("Select Venue", all_venues, key="stats_venue")
-
+        if selected_venue == "Others":
+            selected_venue = st.text_input("Enter venue")
     with col3:
         selected_opponent = st.selectbox("Select Opponent", all_opponents, key="stats_opponent")
 
