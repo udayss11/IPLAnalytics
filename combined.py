@@ -2174,13 +2174,22 @@ app_mode = st.sidebar.radio(
 if app_mode == "Single Team Analysis":
     render_section_header("Single Team Analysis", "📋")
     st.caption("Evaluate a selected 12-player squad with venue-aware ratings and analyst-style explanation.")
+    selected_team = st.selectbox(
+    "Select IPL Team",
+    sorted(df["Team"].dropna().unique()),
+    key="single_team_select"
+)
+    single_team_venue_options = sorted(venue_df["venue"].dropna().astype(str).str.strip().unique().tolist())
+    single_team_venue_options.append("Others")
 
-    selected_team = st.selectbox("Select IPL Team", sorted(df["Team"].dropna().unique()), key="single_team")
     single_team_venue = st.selectbox(
         "Select Venue for Squad Fit Analysis",
-        venue_df["venue"].dropna().astype(str).tolist(),
+        single_team_venue_options,
         key="single_team_venue_mode",
     )
+    if single_team_venue == "Others":
+        single_team_venue = st.text_input("Enter Custom Venue", key="single_team_custom_venue")
+
 
     team_df = df[df["Team"] == selected_team].copy().reset_index(drop=True)
     team_df = prepare_team_df(team_df)
@@ -2304,11 +2313,16 @@ elif app_mode == "Best Playing Squads According to Venue":
     render_section_header("Best Playing Squads According to Venue", "🧭")
     st.caption("Generate venue-aware best XIs based on pitch type, balance, and squad suitability.")
 
+    best_squad_venue_options = sorted(venue_df["venue"].dropna().astype(str).str.strip().unique().tolist())
+    best_squad_venue_options.append("Others")
+
     selected_venue = st.selectbox(
-        "Select Venue",
-        venue_df["venue"].dropna().astype(str).tolist(),
-        key="venue_best_squad",
-    )
+    "Select Venue",
+    best_squad_venue_options,
+    key="venue_best_squad",
+        )
+    if selected_venue == "Others":
+        selected_venue = st.text_input("Enter Custom Venue", key="best_squad_custom_venue")
 
     venue_row = get_venue_row(venue_df, selected_venue)
 
@@ -2335,8 +2349,8 @@ elif app_mode == "Match Winner Prediction":
     st.caption("Prediction combines squad strength, venue fit, toss, head-to-head, and ML context.")
 
     all_teams = sorted(df["Team"].dropna().unique())
-    all_venues = venue_df["venue"].dropna().astype(str).str.strip().tolist()
-
+    all_venues = venue_df["venue"].dropna().astype(str).str.strip().unique().tolist()
+    all_venues.append("Others")
     col1, col2 = st.columns(2)
     with col1:
         team1_name = st.selectbox("Select Team 1", all_teams, key="match_team1_mode")
@@ -2349,6 +2363,8 @@ elif app_mode == "Match Winner Prediction":
         col3, col4, col5 = st.columns(3)
         with col3:
             venue = st.selectbox("Select Venue", all_venues, key="match_venue_mode")
+            if venue == "Others":
+                venue = st.text_input("Enter Custom Venue", key="match_custom_venue")
         with col4:
             toss_winner = st.selectbox("Toss Winner", [team1_name, team2_name], key="match_toss_winner_mode")
         with col5:
