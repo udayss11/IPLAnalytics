@@ -752,7 +752,7 @@ def get_venue_row(venue_df_local, venue):
             "better_to": "balanced"
         })
 
-    venue_row = venue_row.iloc[0] if not venue_row.empty else venue_row
+    return row.iloc[0] 
 
 
 def player_venue_fit_score(player, venue_row):
