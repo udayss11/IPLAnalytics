@@ -1184,14 +1184,8 @@ def suggest_best_impact_options(team, impact_df, innings_mode="bat_first", top_n
 
     return impact_df.sort_values(["Suggestion_Score", "Rating"], ascending=[False, False]).head(top_n).reset_index(drop=True)
 def build_effective_team_with_impact(team, impact_df, innings_mode="bat_first"):
-    """
-    Returns:
-        effective_team: 11-player DataFrame after swapping in the projected impact player
-        projected_impact: selected impact player row or None
-        replaced_player: dropped starter row or None
-    """
     if team is None or team.empty:
-        return team.copy(), None, None
+        return pd.DataFrame(), None, None
 
     team = team.copy().reset_index(drop=True)
 
@@ -1199,14 +1193,11 @@ def build_effective_team_with_impact(team, impact_df, innings_mode="bat_first"):
     if projected_impact is None:
         return team.copy(), None, None
 
-    # decide whom to replace
     if innings_mode == "bat_first":
-        # add bowler, remove weakest batter-ish player
         removable = team[
             team.apply(lambda row: is_batter(row["Role"]) or is_wicketkeeper(row["Role"]) or is_all_rounder(row["Role"]), axis=1)
         ].copy()
 
-        # do not remove both openers if only 2 exist
         openers_count = int(team["Batting Position"].apply(is_opener).sum())
         if openers_count <= 2:
             removable = removable[~removable["Batting Position"].apply(is_opener)]
@@ -1214,13 +1205,11 @@ def build_effective_team_with_impact(team, impact_df, innings_mode="bat_first"):
         if removable.empty:
             removable = team.copy()
 
-    else:  # bowl_first
-        # add batter, remove weakest bowler-ish player
+    else:
         removable = team[
             team.apply(lambda row: is_bowler(row["Role"]) or is_all_rounder(row["Role"]), axis=1)
         ].copy()
 
-        # keep minimum 2 pacers / 1 spinner if possible
         pacers_count = int(team["Bowling Type"].apply(is_pacer).sum())
         spinners_count = int(team["Bowling Type"].apply(is_spinner).sum())
 
@@ -1237,12 +1226,28 @@ def build_effective_team_with_impact(team, impact_df, innings_mode="bat_first"):
             removable = team.copy()
 
     removable = removable.sort_values(["Priority_Score", "Rating"], ascending=[True, True])
-    replaced_player = removable.iloc[0]
+    replaced_player = removable.iloc[0].copy()
 
-    effective_team = team[team["Name"] != replaced_player["Name"]].copy()
-    effective_team = pd.concat([effective_team, pd.DataFrame([projected_impact])], ignore_index=True)
+    effective_team = team[team["Name"] != replaced_player["Name"]].copy().reset_index(drop=True)
+
+    projected_impact_df = pd.DataFrame([projected_impact]).copy()
+    effective_team = pd.concat([effective_team, projected_impact_df], ignore_index=True)
+
+    # keep only expected columns if present
+    expected_cols = team.columns.tolist()
+    effective_team = effective_team.reindex(columns=expected_cols)
 
     effective_team = effective_team.drop_duplicates(subset=["Name"]).reset_index(drop=True)
+
+    # ensure required columns exist
+    required_cols = ["Name", "Role", "Batting Position", "Bowling Type", "Nationality", "Rating", "Priority_Score"]
+    for col in required_cols:
+        if col not in effective_team.columns:
+            effective_team[col] = "" if col in ["Name", "Role", "Batting Position", "Bowling Type", "Nationality"] else 0
+
+    effective_team["Rating"] = pd.to_numeric(effective_team["Rating"], errors="coerce").fillna(0)
+    effective_team["Priority_Score"] = pd.to_numeric(effective_team["Priority_Score"], errors="coerce").fillna(0)
+
     effective_team = prepare_team_df(effective_team)
     effective_team = repair_team(effective_team)
 
@@ -1255,6 +1260,15 @@ def build_effective_team_with_impact(team, impact_df, innings_mode="bat_first"):
 # ============================
 def team_metrics(team, impact):
     metrics = {}
+
+    if team is None or not isinstance(team, pd.DataFrame) or team.empty:
+        raise ValueError("team_metrics received an empty or invalid team DataFrame")
+
+    required_cols = ["Batting Position", "Role", "Bowling Type", "Nationality", "Rating", "Priority_Score", "Name"]
+    missing_cols = [col for col in required_cols if col not in team.columns]
+    if missing_cols:
+        raise ValueError(f"team_metrics missing required columns: {missing_cols}")
+
     combined = pd.concat([team, impact], ignore_index=True) if impact is not None and not impact.empty else team.copy()
     combined = combined.drop_duplicates(subset=["Name"]).reset_index(drop=True)
 
