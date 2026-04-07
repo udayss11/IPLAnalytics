@@ -1119,6 +1119,137 @@ def impact_players(team, team_source_df):
         impact_df = prepare_team_df(impact_df)
     return impact_df
 
+#=============================
+def choose_projected_impact_player(team, impact_df, innings_mode="bat_first"):
+    """
+    innings_mode:
+        - 'bat_first'  -> team starts with stronger batting XI, impact should preferably strengthen bowling
+        - 'bowl_first' -> team starts with stronger bowling XI, impact should preferably strengthen batting
+    """
+    if impact_df is None or impact_df.empty:
+        return None
+
+    impact_df = impact_df.copy().reset_index(drop=True)
+
+    if innings_mode == "bat_first":
+        # prefer bowlers / bowling all-rounders
+        bowl_pool = impact_df[
+            impact_df.apply(lambda row: is_bowler(row["Role"]) or is_all_rounder(row["Role"]), axis=1)
+        ].copy()
+
+        if not bowl_pool.empty:
+            bowl_pool["Impact_Score"] = bowl_pool.apply(
+                lambda row: row["Rating"] + (1.0 if is_bowler(row["Role"]) else 0.6) + (0.4 if is_pacer(row["Bowling Type"]) or is_spinner(row["Bowling Type"]) else 0),
+                axis=1
+            )
+            return bowl_pool.sort_values("Impact_Score", ascending=False).iloc[0]
+
+    elif innings_mode == "bowl_first":
+        # prefer batters / wk / batting all-rounders / opener cover
+        bat_pool = impact_df[
+            impact_df.apply(lambda row: is_batter(row["Role"]) or is_all_rounder(row["Role"]), axis=1)
+        ].copy()
+
+        if not bat_pool.empty:
+            bat_pool["Impact_Score"] = bat_pool.apply(
+                lambda row: row["Rating"]
+                + (1.0 if is_batter(row["Role"]) else 0.6)
+                + (0.6 if is_opener(row["Batting Position"]) else 0.3 if is_top_order(row["Batting Position"]) else 0),
+                axis=1
+            )
+            return bat_pool.sort_values("Impact_Score", ascending=False).iloc[0]
+
+    # fallback: best rated player
+    return impact_df.sort_values("Rating", ascending=False).iloc[0]
+def suggest_best_impact_options(team, impact_df, innings_mode="bat_first", top_n=2):
+    if impact_df is None or impact_df.empty:
+        return pd.DataFrame()
+
+    impact_df = impact_df.copy().reset_index(drop=True)
+
+    if innings_mode == "bat_first":
+        impact_df["Suggestion_Score"] = impact_df.apply(
+            lambda row: row["Rating"]
+            + (1.2 if is_bowler(row["Role"]) else 0.8 if is_all_rounder(row["Role"]) else 0)
+            + (0.5 if is_spinner(row["Bowling Type"]) or is_pacer(row["Bowling Type"]) else 0),
+            axis=1
+        )
+    else:
+        impact_df["Suggestion_Score"] = impact_df.apply(
+            lambda row: row["Rating"]
+            + (1.2 if is_batter(row["Role"]) else 0.8 if is_all_rounder(row["Role"]) else 0)
+            + (0.6 if is_opener(row["Batting Position"]) else 0.3 if is_top_order(row["Batting Position"]) else 0),
+            axis=1
+        )
+
+    return impact_df.sort_values(["Suggestion_Score", "Rating"], ascending=[False, False]).head(top_n).reset_index(drop=True)
+def build_effective_team_with_impact(team, impact_df, innings_mode="bat_first"):
+    """
+    Returns:
+        effective_team: 11-player DataFrame after swapping in the projected impact player
+        projected_impact: selected impact player row or None
+        replaced_player: dropped starter row or None
+    """
+    if team is None or team.empty:
+        return team.copy(), None, None
+
+    team = team.copy().reset_index(drop=True)
+
+    projected_impact = choose_projected_impact_player(team, impact_df, innings_mode)
+    if projected_impact is None:
+        return team.copy(), None, None
+
+    # decide whom to replace
+    if innings_mode == "bat_first":
+        # add bowler, remove weakest batter-ish player
+        removable = team[
+            team.apply(lambda row: is_batter(row["Role"]) or is_wicketkeeper(row["Role"]) or is_all_rounder(row["Role"]), axis=1)
+        ].copy()
+
+        # do not remove both openers if only 2 exist
+        openers_count = int(team["Batting Position"].apply(is_opener).sum())
+        if openers_count <= 2:
+            removable = removable[~removable["Batting Position"].apply(is_opener)]
+
+        if removable.empty:
+            removable = team.copy()
+
+    else:  # bowl_first
+        # add batter, remove weakest bowler-ish player
+        removable = team[
+            team.apply(lambda row: is_bowler(row["Role"]) or is_all_rounder(row["Role"]), axis=1)
+        ].copy()
+
+        # keep minimum 2 pacers / 1 spinner if possible
+        pacers_count = int(team["Bowling Type"].apply(is_pacer).sum())
+        spinners_count = int(team["Bowling Type"].apply(is_spinner).sum())
+
+        temp = removable.copy()
+        if pacers_count <= 2:
+            temp = temp[~temp["Bowling Type"].apply(is_pacer)]
+        if spinners_count <= 1:
+            temp = temp[~temp["Bowling Type"].apply(is_spinner)]
+
+        if not temp.empty:
+            removable = temp
+
+        if removable.empty:
+            removable = team.copy()
+
+    removable = removable.sort_values(["Priority_Score", "Rating"], ascending=[True, True])
+    replaced_player = removable.iloc[0]
+
+    effective_team = team[team["Name"] != replaced_player["Name"]].copy()
+    effective_team = pd.concat([effective_team, pd.DataFrame([projected_impact])], ignore_index=True)
+
+    effective_team = effective_team.drop_duplicates(subset=["Name"]).reset_index(drop=True)
+    effective_team = prepare_team_df(effective_team)
+    effective_team = repair_team(effective_team)
+
+    if len(effective_team) > 11:
+        effective_team = effective_team.head(11).reset_index(drop=True)
+
+    return effective_team, projected_impact, replaced_player
 # ============================
 # RATING LOGIC
 # ============================
@@ -1408,14 +1539,17 @@ def balance_score(team, impact):
     return round(min(10.0, score), 2)
 
 
-def match_strength(team, impact):
-    overall, breakdown = stricter_professional_rating(team, impact, return_breakdown=True)
-    bat = batting_rating(team, impact)
-    bowl = bowling_rating(team, impact)
+def match_strength(team, impact, innings_mode="bat_first"):
+    effective_team, projected_impact, replaced_player = build_effective_team_with_impact(team, impact, innings_mode)
+
+    overall, breakdown = stricter_professional_rating(effective_team, impact, return_breakdown=True)
+    bat = batting_rating(effective_team, impact)
+    bowl = bowling_rating(effective_team, impact)
     bench = bench_strength(impact)
-    balance = balance_score(team, impact)
+    balance = balance_score(effective_team, impact)
 
     strength = overall * 0.40 + bat * 0.20 + bowl * 0.20 + bench * 0.10 + balance * 0.10
+
     return {
         "overall": overall,
         "batting": bat,
@@ -1423,7 +1557,11 @@ def match_strength(team, impact):
         "bench": bench,
         "balance": balance,
         "strength": round(strength, 2),
-        "breakdown": breakdown
+        "breakdown": breakdown,
+        "effective_team": effective_team,
+        "projected_impact": projected_impact,
+        "replaced_player": replaced_player,
+        "innings_mode": innings_mode
     }
 
 
@@ -1803,13 +1941,29 @@ def venue_strategy_boost(team, impact, venue_row, toss_winner, toss_decision, se
 
 
 def hybrid_prediction(hist_df, venue_df_local, team1_name, xi1, impact1, team2_name, xi2, impact2, venue, toss_winner, toss_decision):
-    r1 = match_strength(xi1, impact1)
-    r2 = match_strength(xi2, impact2)
+    # infer batting first / bowling first
+    if canonical_team_name(toss_winner) == canonical_team_name(team1_name):
+        if str(toss_decision).strip().lower() == "bat":
+            team1_mode = "bat_first"
+            team2_mode = "bowl_first"
+        else:
+            team1_mode = "bowl_first"
+            team2_mode = "bat_first"
+    else:
+        if str(toss_decision).strip().lower() == "bat":
+            team1_mode = "bowl_first"
+            team2_mode = "bat_first"
+        else:
+            team1_mode = "bat_first"
+            team2_mode = "bowl_first"
+
+    r1 = match_strength(xi1, impact1, innings_mode=team1_mode)
+    r2 = match_strength(xi2, impact2, innings_mode=team2_mode)
 
     venue_row = get_venue_row(venue_df_local, venue)
 
-    adj1, adj_break1 = venue_adjusted_team_rating(xi1, impact1, venue_row)
-    adj2, adj_break2 = venue_adjusted_team_rating(xi2, impact2, venue_row)
+    adj1, adj_break1 = venue_adjusted_team_rating(r1["effective_team"], impact1, venue_row)
+    adj2, adj_break2 = venue_adjusted_team_rating(r2["effective_team"], impact2, venue_row)
 
     rating1 = (r1["strength"] * 0.7) + (adj1 * 0.3)
     rating2 = (r2["strength"] * 0.7) + (adj2 * 0.3)
@@ -1823,8 +1977,8 @@ def hybrid_prediction(hist_df, venue_df_local, team1_name, xi1, impact1, team2_n
     t1, t2 = toss_prob(hist_df, team1_name, team2_name, toss_winner)
     ml1, ml2 = ml_context_prob(team1_name, team2_name, venue, toss_winner, toss_decision)
 
-    venue_boost1 = venue_strategy_boost(xi1, impact1, venue_row, toss_winner, toss_decision, team1_name)
-    venue_boost2 = venue_strategy_boost(xi2, impact2, venue_row, toss_winner, toss_decision, team2_name)
+    venue_boost1 = venue_strategy_boost(r1["effective_team"], impact1, venue_row, toss_winner, toss_decision, team1_name)
+    venue_boost2 = venue_strategy_boost(r2["effective_team"], impact2, venue_row, toss_winner, toss_decision, team2_name)
 
     context1 = h2h1 * 0.25 + v1 * 0.15 + t1 * 0.10 + ml1 * 0.30 + venue_boost1 * 0.20
     context2 = h2h2 * 0.25 + v2 * 0.15 + t2 * 0.10 + ml2 * 0.30 + venue_boost2 * 0.20
@@ -1867,8 +2021,9 @@ def hybrid_prediction(hist_df, venue_df_local, team1_name, xi1, impact1, team2_n
         "ground_fit2": adj_break2["Ground Fit Rating"],
         "venue_adjusted1": adj1,
         "venue_adjusted2": adj2,
+        "team1_mode": team1_mode,
+        "team2_mode": team2_mode
     }
-
 # ============================
 # SECTION HELPERS
 # ============================
@@ -1877,21 +2032,35 @@ def manual_team_selection(team_name, full_df, key_prefix):
     squad_df = prepare_team_df(squad_df)
 
     st.markdown(f"### {team_name} Squad Selection")
-    selected_players = st.multiselect(
-        f"Select exactly 12 players for {team_name}",
+
+    starting_players = st.multiselect(
+        f"Select exactly 11 starting players for {team_name}",
         squad_df["Name"].tolist(),
-        key=f"{key_prefix}_multiselect",
+        key=f"{key_prefix}_starting_players",
+    )
+
+    remaining_pool = squad_df[~squad_df["Name"].isin(starting_players)]["Name"].tolist()
+
+    impact_players_selected = st.multiselect(
+        f"Select exactly 5 impact players for {team_name}",
+        remaining_pool,
+        key=f"{key_prefix}_impact_players",
     )
 
     xi = pd.DataFrame()
     impact = pd.DataFrame()
 
-    if len(selected_players) == 12:
-        selected_df = squad_df.set_index("Name").loc[selected_players].reset_index()
-        xi = selected_df.iloc[:11].copy().reset_index(drop=True)
-        impact = selected_df.iloc[11:].copy().reset_index(drop=True)
-    elif len(selected_players) > 12:
-        st.error(f"Select only 12 players for {team_name}")
+    if len(starting_players) == 11:
+        xi = squad_df.set_index("Name").loc[starting_players].reset_index()
+        xi = prepare_team_df(xi)
+    elif len(starting_players) > 11:
+        st.error(f"Select only 11 starting players for {team_name}")
+
+    if len(impact_players_selected) == 5:
+        impact = squad_df.set_index("Name").loc[impact_players_selected].reset_index()
+        impact = prepare_team_df(impact)
+    elif len(impact_players_selected) > 5:
+        st.error(f"Select only 5 impact players for {team_name}")
 
     return xi, impact
 
@@ -1922,7 +2091,17 @@ def show_squad(title, xi, impact):
             show_player_card("•", row)
     else:
         st.info("No impact players available")
+def show_impact_suggestions(team_name, xi, impact, innings_mode):
+    suggested = suggest_best_impact_options(xi, impact, innings_mode=innings_mode, top_n=2)
 
+    if suggested is None or suggested.empty:
+        return
+
+    mode_label = "batting first" if innings_mode == "bat_first" else "bowling first"
+    st.markdown(f"### 💡 {team_name} - Ideal Impact Options ({mode_label})")
+
+    for i, row in suggested.iterrows():
+        show_player_card(f"{i+1}.", row)
 
 def get_head_to_head_table(hist_df, team1, team2):
     t1 = canonical_team_name(team1)
@@ -2173,13 +2352,17 @@ app_mode = st.sidebar.radio(
 # ============================
 if app_mode == "Single Team Analysis":
     render_section_header("Single Team Analysis", "📋")
-    st.caption("Evaluate a selected 12-player squad with venue-aware ratings and analyst-style explanation.")
+    st.caption("Evaluate a selected squad with venue-aware ratings, innings-mode logic, and analyst-style explanation.")
+
     selected_team = st.selectbox(
-    "Select IPL Team",
-    sorted(df["Team"].dropna().unique()),
-    key="single_team_select"
-)
-    single_team_venue_options = sorted(venue_df["venue"].dropna().astype(str).str.strip().unique().tolist())
+        "Select IPL Team",
+        sorted(df["Team"].dropna().unique()),
+        key="single_team_select"
+    )
+
+    single_team_venue_options = sorted(
+        venue_df["venue"].dropna().astype(str).str.strip().unique().tolist()
+    )
     single_team_venue_options.append("Others")
 
     single_team_venue = st.selectbox(
@@ -2187,9 +2370,18 @@ if app_mode == "Single Team Analysis":
         single_team_venue_options,
         key="single_team_venue_mode",
     )
+
     if single_team_venue == "Others":
         single_team_venue = st.text_input("Enter Custom Venue", key="single_team_custom_venue")
 
+    single_team_mode = st.radio(
+        "Squad Situation",
+        ["Batting First", "Bowling First"],
+        horizontal=True,
+        key="single_team_innings_mode"
+    )
+
+    innings_mode = "bat_first" if single_team_mode == "Batting First" else "bowl_first"
 
     team_df = df[df["Team"] == selected_team].copy().reset_index(drop=True)
     team_df = prepare_team_df(team_df)
@@ -2197,78 +2389,140 @@ if app_mode == "Single Team Analysis":
     if team_df.empty:
         st.error("No players found for selected team.")
     else:
-        user_sel = st.multiselect(
-            "Select exactly 12 players",
+        starting_players = st.multiselect(
+            "Select exactly 11 starting players",
             team_df["Name"].tolist(),
-            key="single_team_selector_mode",
+            key="single_team_starting_xi"
+        )
+        remaining_pool = team_df[~team_df["Name"].isin(starting_players)]["Name"].tolist()
+
+        impact_players_selected = st.multiselect(
+            "Select exactly 5 impact players",
+            remaining_pool,
+            key="single_team_impact_5"
         )
 
         if st.button("Analyze Team"):
-            if len(user_sel) != 12:
-                st.error("Please select exactly 12 players.")
-            else:
-                user_df = team_df.set_index("Name").loc[user_sel].reset_index()
-                xi = user_df.iloc[:11].copy()
-                impact = user_df.iloc[11:].copy()
+            if len(starting_players) != 11:
+                st.error("Please select exactly 11 starting players.")
+            elif len(impact_players_selected) != 5:
+                st.error("Please select exactly 5 impact players.")
+        else:
+            xi = team_df.set_index("Name").loc[starting_players].reset_index()
+            xi = prepare_team_df(xi)
 
-                rating_user, breakdown = stricter_professional_rating(xi, impact, return_breakdown=True)
-                venue_row = get_venue_row(venue_df, single_team_venue)
-                _, adj_break = venue_adjusted_team_rating(xi, impact, venue_row)
+            impact = team_df.set_index("Name").loc[impact_players_selected].reset_index()
+            impact = prepare_team_df(impact)
 
-                render_metric_tiles([
-                    ("Professional", f"{rating_user}/10", "Overall squad quality"),
-                    ("Batting", f"{breakdown['Batting Rating']}/10", "Batting structure"),
-                    ("Bowling", f"{breakdown['Bowling Rating']}/10", "Bowling resources"),
-                    ("Ground Fit", f"{adj_break['Ground Fit Rating']}/10", "Venue suitability"),
-                    ("Venue Adjusted", f"{adj_break['Venue Adjusted Rating']}/10", "Final venue-aware score"),
-                ])
+            effective_team, projected_impact, replaced_player = build_effective_team_with_impact(
+                xi, impact, innings_mode
+            )
 
-                render_section_header("Selected Playing 12", "🧾")
-                for i, row in user_df.iterrows():
+            rating_user, breakdown = stricter_professional_rating(effective_team, impact, return_breakdown=True)
+            venue_row = get_venue_row(venue_df, single_team_venue)
+            _, adj_break = venue_adjusted_team_rating(effective_team, impact, venue_row)
+
+            render_metric_tiles([
+                ("Professional", f"{rating_user}/10", "Overall squad quality"),
+                ("Batting", f"{breakdown['Batting Rating']}/10", "Batting structure"),
+                ("Bowling", f"{breakdown['Bowling Rating']}/10", "Bowling resources"),
+                ("Ground Fit", f"{adj_break['Ground Fit Rating']}/10", "Venue suitability"),
+                ("Venue Adjusted", f"{adj_break['Venue Adjusted Rating']}/10", "Final venue-aware score"),
+            ])
+
+            render_section_header("Starting XI", "🧾")
+            for i, row in xi.iterrows():
+                show_player_card(f"{i+1}.", row)
+
+            render_section_header("Impact Options", "🎯")
+            for i, row in impact.iterrows():
+                show_player_card(f"{i+1}.", row)
+
+            suggested = suggest_best_impact_options(xi, impact, innings_mode=innings_mode, top_n=2)
+            if not suggested.empty:
+                render_section_header(f"Ideal Impact Options ({single_team_mode.lower()})", "💡")
+                for i, row in suggested.iterrows():
                     show_player_card(f"{i+1}.", row)
 
-                if breakdown.get("Reasons"):
-                    render_section_header("Rating Deductions", "⚠️")
-                    for reason in breakdown["Reasons"]:
-                        render_text_box("weakness", "Weakness", reason)
-
-                if breakdown.get("Analysis Flags"):
-                    render_section_header("Squad Observations", "🔎")
-                    for flag in breakdown["Analysis Flags"]:
-                        render_text_box("insight", "Observation", flag)
-
-        if st.button("Explain This Squad", key="explain_single_team"):
-            if len(user_sel) != 12:
-                st.error("Please select exactly 12 players first.")
-            else:
-                user_df = team_df.set_index("Name").loc[user_sel].reset_index()
-                xi = user_df.iloc[:11].copy()
-                impact = user_df.iloc[11:].copy()
-
-                rating_user, breakdown = stricter_professional_rating(xi, impact, return_breakdown=True)
-                venue_row = get_venue_row(venue_df, single_team_venue)
-                _, adj_break = venue_adjusted_team_rating(xi, impact, venue_row)
-
-                explanation = llm_style_squad_explainer(
-                    team_name=selected_team,
-                    venue_name=single_team_venue,
-                    venue_row=venue_row,
-                    xi=xi,
-                    impact=impact,
-                    professional_rating=rating_user,
-                    breakdown=breakdown,
-                    venue_adjusted_break=adj_break
+            if projected_impact is not None:
+                render_text_box(
+                    "insight",
+                    "Projected Impact Used in Rating",
+                    f"{projected_impact['Name']} was considered as the projected impact player for {single_team_mode.lower()}."
                 )
 
-                render_section_header("LLM-Style Squad Explanation", "🧠")
-                render_text_box("insight", "Analyst Summary", explanation["summary"])
-                for s in explanation["strengths"]:
-                    render_text_box("strength", "Strength", s)
-                for w in explanation["weaknesses"]:
-                    render_text_box("weakness", "Weakness", w)
-                for v in explanation["venue_points"]:
-                    render_text_box("insight", "Venue Fit", v)
-                render_text_box("tip", "Suggested Improvement", explanation["suggestion"])
+            if replaced_player is not None:
+                render_text_box(
+                    "insight",
+                    "Effective XI Swap",
+                    f"{projected_impact['Name']} was projected to replace {replaced_player['Name']} for rating and balance calculation."
+                )
+
+            render_section_header("Effective XI Used for Rating", "⚙️")
+            for i, row in effective_team.iterrows():
+                show_player_card(f"{i+1}.", row)
+
+            if breakdown.get("Reasons"):
+                render_section_header("Rating Deductions", "⚠️")
+                for reason in breakdown["Reasons"]:
+                    render_text_box("weakness", "Weakness", reason)
+
+            if breakdown.get("Analysis Flags"):
+                render_section_header("Squad Observations", "🔎")
+                for flag in breakdown["Analysis Flags"]:
+                    render_text_box("insight", "Observation", flag)
+
+        if st.button("Explain This Squad", key="explain_single_team"):
+            if len(starting_players) != 11:
+               st.error("Please select exactly 11 starting players first.")
+            elif len(impact_players_selected) != 5:
+                st.error("Please select exactly 5 impact players first.")
+        else:
+            xi = team_df.set_index("Name").loc[starting_players].reset_index()
+            xi = prepare_team_df(xi)
+
+            impact = team_df.set_index("Name").loc[impact_players_selected].reset_index()
+            impact = prepare_team_df(impact)
+
+            effective_team, projected_impact, replaced_player = build_effective_team_with_impact(
+                xi, impact, innings_mode
+            )
+
+            rating_user, breakdown = stricter_professional_rating(effective_team, impact, return_breakdown=True)
+            venue_row = get_venue_row(venue_df, single_team_venue)
+            _, adj_break = venue_adjusted_team_rating(effective_team, impact, venue_row)
+
+            explanation = llm_style_squad_explainer(
+                team_name=selected_team,
+                venue_name=single_team_venue,
+                venue_row=venue_row,
+                xi=effective_team,
+                impact=impact,
+                professional_rating=rating_user,
+                breakdown=breakdown,
+                venue_adjusted_break=adj_break
+            )   
+
+            render_section_header("LLM-Style Squad Explanation", "🧠")
+            render_text_box("insight", "Analyst Summary", explanation["summary"])
+
+            for s in explanation["strengths"]:
+                render_text_box("strength", "Strength", s)
+
+            for w in explanation["weaknesses"]:
+                render_text_box("weakness", "Weakness", w)
+
+            for v in explanation["venue_points"]:
+                render_text_box("insight", "Venue Fit", v)
+
+            render_text_box("tip", "Suggested Improvement", explanation["suggestion"])
+
+            if projected_impact is not None:
+                render_text_box(
+                    "insight",
+                    "Projected Impact Context",
+                    f"{projected_impact['Name']} was treated as the likely impact player for {single_team_mode.lower()} while generating this analysis."
+                )
 
 # ============================
 # MODE 2
@@ -2381,6 +2635,21 @@ elif app_mode == "Match Winner Prediction":
 
         xi1, impact1 = pd.DataFrame(), pd.DataFrame()
         xi2, impact2 = pd.DataFrame(), pd.DataFrame()
+        # infer innings modes for both teams
+        if canonical_team_name(toss_winner) == canonical_team_name(team1_name):
+            if str(toss_decision).strip().lower() == "bat":
+                team1_mode = "bat_first"
+                team2_mode = "bowl_first"
+            else:
+                team1_mode = "bowl_first"
+                team2_mode = "bat_first"
+        else:
+            if str(toss_decision).strip().lower() == "bat":
+                team1_mode = "bowl_first"
+                team2_mode = "bat_first"
+            else:
+                team1_mode = "bat_first"
+                team2_mode = "bowl_first"
 
         if squad_mode == "Auto Best XI":
             xi1, impact1 = auto_best_team_for_match(team1_name, df, venue_row=venue_row_match)
@@ -2389,8 +2658,12 @@ elif app_mode == "Match Winner Prediction":
             left, right = st.columns(2)
             with left:
                 show_squad(f"{team1_name}", xi1, impact1)
+                if not impact1.empty:
+                    show_impact_suggestions(team1_name, xi1, impact1, team1_mode)
             with right:
                 show_squad(f"{team2_name}", xi2, impact2)
+                if not impact2.empty:
+                    show_impact_suggestions(team2_name, xi2, impact2, team2_mode)
         else:
             left, right = st.columns(2)
             with left:
@@ -2401,25 +2674,57 @@ elif app_mode == "Match Winner Prediction":
             if not xi1.empty:
                 with left:
                     show_squad(f"{team1_name} Selected Squad", xi1, impact1)
+                    if not impact1.empty and len(impact1)>=2:
+                        show_impact_suggestions(team1_name, xi1, impact1, team1_mode)
             if not xi2.empty:
                 with right:
                     show_squad(f"{team2_name} Selected Squad", xi2, impact2)
+                    if not impact2.empty and len(impact2)>=2:
+                        show_impact_suggestions(team2_name, xi2, impact2, team2_mode)
 
         ready = (
             not xi1.empty and len(xi1) == 11 and
-            not xi2.empty and len(xi2) == 11
+            not xi2.empty and len(xi2) == 11 and
+            not impact1.empty and len(impact1) == 5 and
+            not impact2.empty and len(impact2) == 5
         )
 
         if st.button("Predict Match Winner"):
             if not ready:
-                st.error("Please make sure both teams have valid Playing XI selections.")
+                st.error("Please make sure both teams have valid Playing XI and 5 impact player selections.")
             else:
-                result = hybrid_prediction(
+                st.session_state["match_result"] = hybrid_prediction(
                     matches_df, venue_df,
                     team1_name, xi1, impact1,
                     team2_name, xi2, impact2,
                     venue, toss_winner, toss_decision,
-                )
+                    )
+                st.session_state["match_inputs"] = {
+                    "team1_name": team1_name,
+                    "team2_name": team2_name,
+                    "xi1": xi1.copy(),
+                    "impact1": impact1.copy(),
+                    "xi2": xi2.copy(),
+                    "impact2": impact2.copy(),
+                    "venue": venue,
+                    "toss_winner": toss_winner,
+                    "toss_decision": toss_decision,
+                    "venue_row_match": venue_row_match,
+                    }
+                if "match_result" in st.session_state and "match_inputs" in st.session_state:
+                    result = st.session_state["match_result"]
+                    saved_inputs = st.session_state["match_inputs"]
+
+                    team1_name = saved_inputs["team1_name"]
+                    team2_name = saved_inputs["team2_name"]
+                    xi1 = saved_inputs["xi1"]
+                    impact1 = saved_inputs["impact1"]
+                    xi2 = saved_inputs["xi2"]
+                    impact2 = saved_inputs["impact2"]
+                    venue = saved_inputs["venue"]
+                    toss_winner = saved_inputs["toss_winner"]
+                    toss_decision = saved_inputs["toss_decision"]
+                    venue_row_match = saved_inputs["venue_row_match"]
 
                 render_metric_tiles([
                     (team1_name, f"{result['prob1']}%", "Predicted win probability"),
@@ -2495,7 +2800,24 @@ elif app_mode == "Match Winner Prediction":
                         for r in reasons[:4]:
                             render_text_box("insight", "Key Factor", r)
 
+                    if result["team1"].get("projected_impact") is not None:
+                        render_text_box(
+                            "insight",
+                            f"{team1_name} Projected Impact Used in Rating",
+                            f"{result['team1']['projected_impact']['Name']} was considered as the projected impact player for {result['team1_mode'].replace('_', ' ')}."
+                        )
+
+                    if result["team2"].get("projected_impact") is not None:
+                        render_text_box(
+                            "insight",
+                            f"{team2_name} Projected Impact Used in Rating",
+                            f"{result['team2']['projected_impact']['Name']} was considered as the projected impact player for {result['team2_mode'].replace('_', ' ')}."
+                        )
+
                     if st.button("Explain Both Squads", key="explain_match_squads"):
+                        st.session_state["show_both_squad_explanations"] = True
+
+                    if st.session_state.get("show_both_squad_explanations", False):
                         team1_overall, team1_breakdown = stricter_professional_rating(xi1, impact1, return_breakdown=True)
                         _, team1_adj_break = venue_adjusted_team_rating(xi1, impact1, venue_row_match)
 
@@ -2525,6 +2847,7 @@ elif app_mode == "Match Winner Prediction":
                         )
 
                         c1, c2 = st.columns(2)
+
                         with c1:
                             render_section_header(f"{team1_name} Explanation", "🧠")
                             render_text_box("insight", "Analyst Summary", exp1["summary"])
@@ -2532,7 +2855,9 @@ elif app_mode == "Match Winner Prediction":
                                 render_text_box("strength", "Strength", s)
                             for w in exp1["weaknesses"]:
                                 render_text_box("weakness", "Weakness", w)
-                            render_text_box("tip", "Suggestion", exp1["suggestion"])
+                            for v in exp1["venue_points"]:
+                                render_text_box("insight", "Venue Fit", v)
+                            render_text_box("tip", "Suggested Improvement", exp1["suggestion"])
 
                         with c2:
                             render_section_header(f"{team2_name} Explanation", "🧠")
@@ -2541,8 +2866,9 @@ elif app_mode == "Match Winner Prediction":
                                 render_text_box("strength", "Strength", s)
                             for w in exp2["weaknesses"]:
                                 render_text_box("weakness", "Weakness", w)
-                            render_text_box("tip", "Suggestion", exp2["suggestion"])
-
+                            for v in exp2["venue_points"]:
+                                render_text_box("insight", "Venue Fit", v)
+                            render_text_box("tip", "Suggested Improvement", exp2["suggestion"])      
                 with tab4:
                     compare_df = pd.DataFrame({
                         "Metric": [
