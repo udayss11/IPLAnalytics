@@ -1121,31 +1121,34 @@ def impact_players(team, team_source_df):
 
 #=============================
 def choose_projected_impact_player(team, impact_df, innings_mode="bat_first"):
-    """
-    innings_mode:
-        - 'bat_first'  -> team starts with stronger batting XI, impact should preferably strengthen bowling
-        - 'bowl_first' -> team starts with stronger bowling XI, impact should preferably strengthen batting
-    """
     if impact_df is None or impact_df.empty:
         return None
 
     impact_df = impact_df.copy().reset_index(drop=True)
 
+    # If XI already has 4 overseas, projected impact cannot be overseas
+    overseas_in_xi = int(team["Nationality"].apply(is_overseas).sum())
+    if overseas_in_xi >= 4:
+        impact_df = impact_df[~impact_df["Nationality"].apply(is_overseas)].copy()
+
+    if impact_df.empty:
+        return None
+
     if innings_mode == "bat_first":
-        # prefer bowlers / bowling all-rounders
         bowl_pool = impact_df[
             impact_df.apply(lambda row: is_bowler(row["Role"]) or is_all_rounder(row["Role"]), axis=1)
         ].copy()
 
         if not bowl_pool.empty:
             bowl_pool["Impact_Score"] = bowl_pool.apply(
-                lambda row: row["Rating"] + (1.0 if is_bowler(row["Role"]) else 0.6) + (0.4 if is_pacer(row["Bowling Type"]) or is_spinner(row["Bowling Type"]) else 0),
+                lambda row: row["Rating"]
+                + (1.0 if is_bowler(row["Role"]) else 0.6)
+                + (0.4 if is_pacer(row["Bowling Type"]) or is_spinner(row["Bowling Type"]) else 0),
                 axis=1
             )
             return bowl_pool.sort_values("Impact_Score", ascending=False).iloc[0]
 
     elif innings_mode == "bowl_first":
-        # prefer batters / wk / batting all-rounders / opener cover
         bat_pool = impact_df[
             impact_df.apply(lambda row: is_batter(row["Role"]) or is_all_rounder(row["Role"]), axis=1)
         ].copy()
@@ -1159,13 +1162,20 @@ def choose_projected_impact_player(team, impact_df, innings_mode="bat_first"):
             )
             return bat_pool.sort_values("Impact_Score", ascending=False).iloc[0]
 
-    # fallback: best rated player
     return impact_df.sort_values("Rating", ascending=False).iloc[0]
 def suggest_best_impact_options(team, impact_df, innings_mode="bat_first", top_n=2):
     if impact_df is None or impact_df.empty:
         return pd.DataFrame()
 
     impact_df = impact_df.copy().reset_index(drop=True)
+
+    # If starting XI already has 4 overseas, exclude overseas impact options
+    overseas_in_xi = int(team["Nationality"].apply(is_overseas).sum())
+    if overseas_in_xi >= 4:
+        impact_df = impact_df[~impact_df["Nationality"].apply(is_overseas)].copy()
+
+    if impact_df.empty:
+        return pd.DataFrame()
 
     if innings_mode == "bat_first":
         impact_df["Suggestion_Score"] = impact_df.apply(
@@ -1184,6 +1194,12 @@ def suggest_best_impact_options(team, impact_df, innings_mode="bat_first", top_n
 
     return impact_df.sort_values(["Suggestion_Score", "Rating"], ascending=[False, False]).head(top_n).reset_index(drop=True)
 def build_effective_team_with_impact(team, impact_df, innings_mode="bat_first"):
+    """
+    Returns:
+        effective_team: 12-player DataFrame = starting XI + projected impact player
+        projected_impact: selected impact player row or None
+        replaced_player: always None now, since no replacement is done for rating
+    """
     if team is None or team.empty:
         return pd.DataFrame(), None, None
 
@@ -1193,53 +1209,11 @@ def build_effective_team_with_impact(team, impact_df, innings_mode="bat_first"):
     if projected_impact is None:
         return team.copy(), None, None
 
-    if innings_mode == "bat_first":
-        removable = team[
-            team.apply(lambda row: is_batter(row["Role"]) or is_wicketkeeper(row["Role"]) or is_all_rounder(row["Role"]), axis=1)
-        ].copy()
-
-        openers_count = int(team["Batting Position"].apply(is_opener).sum())
-        if openers_count <= 2:
-            removable = removable[~removable["Batting Position"].apply(is_opener)]
-
-        if removable.empty:
-            removable = team.copy()
-
-    else:
-        removable = team[
-            team.apply(lambda row: is_bowler(row["Role"]) or is_all_rounder(row["Role"]), axis=1)
-        ].copy()
-
-        pacers_count = int(team["Bowling Type"].apply(is_pacer).sum())
-        spinners_count = int(team["Bowling Type"].apply(is_spinner).sum())
-
-        temp = removable.copy()
-        if pacers_count <= 2:
-            temp = temp[~temp["Bowling Type"].apply(is_pacer)]
-        if spinners_count <= 1:
-            temp = temp[~temp["Bowling Type"].apply(is_spinner)]
-
-        if not temp.empty:
-            removable = temp
-
-        if removable.empty:
-            removable = team.copy()
-
-    removable = removable.sort_values(["Priority_Score", "Rating"], ascending=[True, True])
-    replaced_player = removable.iloc[0].copy()
-
-    effective_team = team[team["Name"] != replaced_player["Name"]].copy().reset_index(drop=True)
-
     projected_impact_df = pd.DataFrame([projected_impact]).copy()
-    effective_team = pd.concat([effective_team, projected_impact_df], ignore_index=True)
 
-    # keep only expected columns if present
-    expected_cols = team.columns.tolist()
-    effective_team = effective_team.reindex(columns=expected_cols)
-
+    effective_team = pd.concat([team.copy(), projected_impact_df], ignore_index=True)
     effective_team = effective_team.drop_duplicates(subset=["Name"]).reset_index(drop=True)
 
-    # ensure required columns exist
     required_cols = ["Name", "Role", "Batting Position", "Bowling Type", "Nationality", "Rating", "Priority_Score"]
     for col in required_cols:
         if col not in effective_team.columns:
@@ -1249,12 +1223,8 @@ def build_effective_team_with_impact(team, impact_df, innings_mode="bat_first"):
     effective_team["Priority_Score"] = pd.to_numeric(effective_team["Priority_Score"], errors="coerce").fillna(0)
 
     effective_team = prepare_team_df(effective_team)
-    effective_team = repair_team(effective_team)
 
-    if len(effective_team) > 11:
-        effective_team = effective_team.head(11).reset_index(drop=True)
-
-    return effective_team, projected_impact, replaced_player
+    return effective_team, projected_impact, None
 # ============================
 # RATING LOGIC
 # ============================
@@ -2471,7 +2441,7 @@ if app_mode == "Single Team Analysis":
                         render_text_box(
                             "insight",
                             "Effective XI Swap",
-                            f"{projected_impact['Name']} was projected to replace {replaced_player['Name']} for rating and balance calculation."
+                            f"{projected_impact['Name']} was added to the starting XI for rating and balance calculation, creating an effective 12-player squad for {single_team_mode.lower()}."
                         )
 
                     render_section_header("Effective XI Used for Rating", "⚙️")
@@ -2822,14 +2792,14 @@ elif app_mode == "Match Winner Prediction":
                         render_text_box(
                             "insight",
                             f"{team1_name} Projected Impact Used in Rating",
-                            f"{result['team1']['projected_impact']['Name']} was considered as the projected impact player for {result['team1_mode'].replace('_', ' ')}."
+                            f"{result['team1']['projected_impact']['Name']} was added as the projected impact player for {result['team1_mode'].replace('_', ' ')}."
                         )
 
                     if result["team2"].get("projected_impact") is not None:
                         render_text_box(
                             "insight",
                             f"{team2_name} Projected Impact Used in Rating",
-                            f"{result['team2']['projected_impact']['Name']} was considered as the projected impact player for {result['team2_mode'].replace('_', ' ')}."
+                            f"{result['team2']['projected_impact']['Name']} was added as the projected impact player for {result['team2_mode'].replace('_', ' ')}."
                         )
 
                     if st.button("Explain Both Squads", key="explain_match_squads"):
