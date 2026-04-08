@@ -2421,122 +2421,126 @@ if app_mode == "Single Team Analysis":
                 st.error("Please select exactly 11 starting players.")
             elif len(impact_players_selected) != 5:
                 st.error("Please select exactly 5 impact players.")
-        else:
-            xi = team_df.set_index("Name").loc[starting_players].reset_index()
-            xi = prepare_team_df(xi)
+            else:
+                xi = team_df.set_index("Name").loc[starting_players].reset_index()
+                xi = prepare_team_df(xi)
 
-            impact = team_df.set_index("Name").loc[impact_players_selected].reset_index()
-            impact = prepare_team_df(impact)
+                impact = team_df.set_index("Name").loc[impact_players_selected].reset_index()
+                impact = prepare_team_df(impact)
 
-            effective_team, projected_impact, replaced_player = build_effective_team_with_impact(
-                xi, impact, innings_mode
-            )
-
-            rating_user, breakdown = stricter_professional_rating(effective_team, impact, return_breakdown=True)
-            venue_row = get_venue_row(venue_df, single_team_venue)
-            _, adj_break = venue_adjusted_team_rating(effective_team, impact, venue_row)
-
-            render_metric_tiles([
-                ("Professional", f"{rating_user}/10", "Overall squad quality"),
-                ("Batting", f"{breakdown['Batting Rating']}/10", "Batting structure"),
-                ("Bowling", f"{breakdown['Bowling Rating']}/10", "Bowling resources"),
-                ("Ground Fit", f"{adj_break['Ground Fit Rating']}/10", "Venue suitability"),
-                ("Venue Adjusted", f"{adj_break['Venue Adjusted Rating']}/10", "Final venue-aware score"),
-            ])
-
-            render_section_header("Starting XI", "🧾")
-            for i, row in xi.iterrows():
-                show_player_card(f"{i+1}.", row)
-
-            render_section_header("Impact Options", "🎯")
-            for i, row in impact.iterrows():
-                show_player_card(f"{i+1}.", row)
-
-            suggested = suggest_best_impact_options(xi, impact, innings_mode=innings_mode, top_n=2)
-            if not suggested.empty:
-                render_section_header(f"Ideal Impact Options ({single_team_mode.lower()})", "💡")
-                for i, row in suggested.iterrows():
-                    show_player_card(f"{i+1}.", row)
-
-            if projected_impact is not None:
-                render_text_box(
-                    "insight",
-                    "Projected Impact Used in Rating",
-                    f"{projected_impact['Name']} was considered as the projected impact player for {single_team_mode.lower()}."
+                effective_team, projected_impact, replaced_player = build_effective_team_with_impact(
+                    xi, impact, innings_mode
                 )
+                if effective_team is none or effective_team.empty:
+                    st.error("Could not build an effective team from the selected XI and impact players.")
+                else:
+                    rating_user, breakdown = stricter_professional_rating(effective_team, impact, return_breakdown=True)
+                    venue_row = get_venue_row(venue_df, single_team_venue)
+                    _, adj_break = venue_adjusted_team_rating(effective_team, impact, venue_row)
 
-            if replaced_player is not None:
-                render_text_box(
-                    "insight",
-                    "Effective XI Swap",
-                    f"{projected_impact['Name']} was projected to replace {replaced_player['Name']} for rating and balance calculation."
-                )
+                    render_metric_tiles([
+                        ("Professional", f"{rating_user}/10", "Overall squad quality"),
+                        ("Batting", f"{breakdown['Batting Rating']}/10", "Batting structure"),
+                        ("Bowling", f"{breakdown['Bowling Rating']}/10", "Bowling resources"),
+                        ("Ground Fit", f"{adj_break['Ground Fit Rating']}/10", "Venue suitability"),
+                        ("Venue Adjusted", f"{adj_break['Venue Adjusted Rating']}/10", "Final venue-aware score"),
+                     ])
 
-            render_section_header("Effective XI Used for Rating", "⚙️")
-            for i, row in effective_team.iterrows():
-                show_player_card(f"{i+1}.", row)
+                    render_section_header("Starting XI", "🧾")
+                    for i, row in xi.iterrows():
+                        show_player_card(f"{i+1}.", row)
 
-            if breakdown.get("Reasons"):
-                render_section_header("Rating Deductions", "⚠️")
-                for reason in breakdown["Reasons"]:
-                    render_text_box("weakness", "Weakness", reason)
+                    render_section_header("Impact Options", "🎯")
+                    for i, row in impact.iterrows():
+                        show_player_card(f"{i+1}.", row)
 
-            if breakdown.get("Analysis Flags"):
-                render_section_header("Squad Observations", "🔎")
-                for flag in breakdown["Analysis Flags"]:
-                    render_text_box("insight", "Observation", flag)
+                    suggested = suggest_best_impact_options(xi, impact, innings_mode=innings_mode, top_n=2)
+                    if not suggested.empty:
+                        render_section_header(f"Ideal Impact Options ({single_team_mode.lower()})", "💡")
+                        for i, row in suggested.iterrows():
+                            show_player_card(f"{i+1}.", row)
+
+                    if projected_impact is not None:
+                        render_text_box(
+                            "insight",
+                            "Projected Impact Used in Rating",
+                            f"{projected_impact['Name']} was considered as the projected impact player for {single_team_mode.lower()}."
+                        )
+
+                    if replaced_player is not None:
+                        render_text_box(
+                            "insight",
+                            "Effective XI Swap",
+                            f"{projected_impact['Name']} was projected to replace {replaced_player['Name']} for rating and balance calculation."
+                        )
+
+                    render_section_header("Effective XI Used for Rating", "⚙️")
+                    for i, row in effective_team.iterrows():
+                        show_player_card(f"{i+1}.", row)
+
+                    if breakdown.get("Reasons"):
+                        render_section_header("Rating Deductions", "⚠️")
+                        for reason in breakdown["Reasons"]:
+                            render_text_box("weakness", "Weakness", reason)
+
+                    if breakdown.get("Analysis Flags"):
+                        render_section_header("Squad Observations", "🔎")
+                        for flag in breakdown["Analysis Flags"]:
+                            render_text_box("insight", "Observation", flag)
 
         if st.button("Explain This Squad", key="explain_single_team"):
             if len(starting_players) != 11:
                st.error("Please select exactly 11 starting players first.")
             elif len(impact_players_selected) != 5:
                 st.error("Please select exactly 5 impact players first.")
-        else:
-            xi = team_df.set_index("Name").loc[starting_players].reset_index()
-            xi = prepare_team_df(xi)
+            else:
+                xi = team_df.set_index("Name").loc[starting_players].reset_index()
+                xi = prepare_team_df(xi)
 
-            impact = team_df.set_index("Name").loc[impact_players_selected].reset_index()
-            impact = prepare_team_df(impact)
+                impact = team_df.set_index("Name").loc[impact_players_selected].reset_index()
+                impact = prepare_team_df(impact)
 
-            effective_team, projected_impact, replaced_player = build_effective_team_with_impact(
-                xi, impact, innings_mode
-            )
+                effective_team, projected_impact, replaced_player = build_effective_team_with_impact(
+                    xi, impact, innings_mode
+                ) 
+                if effective_team is None or effective_team.empty:
+                    st.error("Could not build an effective team from the selected XI and impact players.")
+                else:       
+                    rating_user, breakdown = stricter_professional_rating(effective_team, impact, return_breakdown=True)
+                    venue_row = get_venue_row(venue_df, single_team_venue)
+                    _, adj_break = venue_adjusted_team_rating(effective_team, impact, venue_row)
 
-            rating_user, breakdown = stricter_professional_rating(effective_team, impact, return_breakdown=True)
-            venue_row = get_venue_row(venue_df, single_team_venue)
-            _, adj_break = venue_adjusted_team_rating(effective_team, impact, venue_row)
+                    explanation = llm_style_squad_explainer(
+                        team_name=selected_team,
+                        venue_name=single_team_venue,
+                        venue_row=venue_row,
+                        xi=effective_team,
+                        impact=impact,
+                        professional_rating=rating_user,
+                        breakdown=breakdown,
+                        venue_adjusted_break=adj_break
+                    )   
 
-            explanation = llm_style_squad_explainer(
-                team_name=selected_team,
-                venue_name=single_team_venue,
-                venue_row=venue_row,
-                xi=effective_team,
-                impact=impact,
-                professional_rating=rating_user,
-                breakdown=breakdown,
-                venue_adjusted_break=adj_break
-            )   
+                    render_section_header("LLM-Style Squad Explanation", "🧠")
+                    render_text_box("insight", "Analyst Summary", explanation["summary"])
 
-            render_section_header("LLM-Style Squad Explanation", "🧠")
-            render_text_box("insight", "Analyst Summary", explanation["summary"])
+                    for s in explanation["strengths"]:
+                        render_text_box("strength", "Strength", s)
 
-            for s in explanation["strengths"]:
-                render_text_box("strength", "Strength", s)
+                    for w in explanation["weaknesses"]:
+                        render_text_box("weakness", "Weakness", w)
 
-            for w in explanation["weaknesses"]:
-                render_text_box("weakness", "Weakness", w)
+                    for v in explanation["venue_points"]:
+                        render_text_box("insight", "Venue Fit", v)
 
-            for v in explanation["venue_points"]:
-                render_text_box("insight", "Venue Fit", v)
+                    render_text_box("tip", "Suggested Improvement", explanation["suggestion"])
 
-            render_text_box("tip", "Suggested Improvement", explanation["suggestion"])
-
-            if projected_impact is not None:
-                render_text_box(
-                    "insight",
-                    "Projected Impact Context",
-                    f"{projected_impact['Name']} was treated as the likely impact player for {single_team_mode.lower()} while generating this analysis."
-                )
+                    if projected_impact is not None:
+                        render_text_box(
+                            "insight",
+                            "Projected Impact Context",
+                            f"{projected_impact['Name']} was treated as the likely impact player for {single_team_mode.lower()} while generating this analysis."
+                        )
 
 # ============================
 # MODE 2
