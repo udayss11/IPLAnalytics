@@ -2431,7 +2431,7 @@ if app_mode == "Single Team Analysis":
                 effective_team, projected_impact, replaced_player = build_effective_team_with_impact(
                     xi, impact, innings_mode
                 )
-                if effective_team is none or effective_team.empty:
+                if effective_team is None or effective_team.empty:
                     st.error("Could not build an effective team from the selected XI and impact players.")
                 else:
                     rating_user, breakdown = stricter_professional_rating(effective_team, impact, return_breakdown=True)
