@@ -717,14 +717,60 @@ def role_badge(role):
     return "BOWL", "badge-bowl"
 
 
-def show_player_card(index_text, row):
+def team_color_map(team_name):
+    team_name = str(team_name).strip()
+    mapping = {
+        "CSK": ("#f9c80e", "#1e293b"),
+        "MI": ("#2563eb", "#0f172a"),
+        "RCB": ("#dc2626", "#111827"),
+        "KKR": ("#7c3aed", "#1f2937"),
+        "DC": ("#2563eb", "#dc2626"),
+        "RR": ("#ec4899", "#1f2937"),
+        "SRH": ("#f97316", "#111827"),
+        "PBKS": ("#ef4444", "#111827"),
+        "GT": ("#0f172a", "#38bdf8"),
+        "LSG": ("#06b6d4", "#f97316"),
+
+        "Chennai Super Kings": ("#f9c80e", "#1e293b"),
+        "Mumbai Indians": ("#2563eb", "#0f172a"),
+        "Royal Challengers Bangalore": ("#dc2626", "#111827"),
+        "Royal Challengers Bengaluru": ("#dc2626", "#111827"),
+        "Kolkata Knight Riders": ("#7c3aed", "#1f2937"),
+        "Delhi Capitals": ("#2563eb", "#dc2626"),
+        "Rajasthan Royals": ("#ec4899", "#1f2937"),
+        "Sunrisers Hyderabad": ("#f97316", "#111827"),
+        "Punjab Kings": ("#ef4444", "#111827"),
+        "Gujarat Titans": ("#0f172a", "#38bdf8"),
+        "Lucknow Supergiants": ("#06b6d4", "#f97316"),
+        "Lucknow Super Giants": ("#06b6d4", "#f97316"),
+    }
+    return mapping.get(team_name, ("#071124", "#020617"))
+
+
+def show_player_card(index_text, row, team_name=None):
     txt, cls = role_badge(row["Role"])
+
+    c1, c2 = team_color_map(team_name) if team_name else ("#071124", "#020617")
+    bg = f"linear-gradient(135deg, {c1} 0%, {c2} 100%)"
+
     st.markdown(
         f"""
-        <div class="player-card">
+        <div style="
+            background: {bg};
+            padding: 14px 18px;
+            border-radius: 18px;
+            margin-bottom: 10px;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 15px;
+            box-shadow: 0 10px 20px rgba(2,6,23,0.18);
+            border: 1px solid rgba(255,255,255,0.08);
+        ">
             <div>
                 <b>{index_text} {row['Name']}</b><br>
-                <span class="player-meta">
+                <span style="font-size: 13px; opacity: 0.92;">
                     {row['Role']} | {row['Batting Position']} | {row['Bowling Type']} | {row['Nationality']} | Rating: {row['Rating']}
                 </span>
             </div>
@@ -733,7 +779,6 @@ def show_player_card(index_text, row):
         """,
         unsafe_allow_html=True,
     )
-
 # ============================
 # VENUE HELPERS
 # ============================
@@ -2059,7 +2104,7 @@ def auto_best_team_for_match(team_name, full_df, venue_row=None):
     return xi, impact
 
 
-def show_squad(title, xi, impact):
+def show_squad(title, xi, impact, team_name=None):
     st.markdown(f"### {title}")
     if xi.empty:
         st.warning("No XI available")
@@ -2067,14 +2112,15 @@ def show_squad(title, xi, impact):
 
     st.markdown("**Playing XI**")
     for i, row in xi.iterrows():
-        show_player_card(f"{i+1}.", row)
+        show_player_card(f"{i+1}.", row, team_name)
 
     st.markdown("**Impact / Bench**")
     if impact is not None and not impact.empty:
         for _, row in impact.iterrows():
-            show_player_card("•", row)
+            show_player_card("•", row, team_name)
     else:
         st.info("No impact players available")
+        
 def show_impact_suggestions(team_name, xi, impact, innings_mode):
     suggested = suggest_best_impact_options(xi, impact, innings_mode=innings_mode, top_n=2)
 
@@ -2085,7 +2131,7 @@ def show_impact_suggestions(team_name, xi, impact, innings_mode):
     st.markdown(f"### 💡 {team_name} - Ideal Impact Options ({mode_label})")
 
     for i, row in suggested.iterrows():
-        show_player_card(f"{i+1}.", row)
+        show_player_card(f"{i+1}.", row, team_name)
 
 def get_head_to_head_table(hist_df, team1, team2):
     t1 = canonical_team_name(team1)
@@ -2139,12 +2185,12 @@ def show_best_squad_for_venue(team_name, full_df, venue_row):
     ])
 
     for i, row in xi.iterrows():
-        show_player_card(f"{i+1}.", row)
+        show_player_card(f"{i+1}.", row, team_name)
 
     st.markdown("**Impact Players**")
     if not impact.empty:
         for _, row in impact.iterrows():
-            show_player_card("•", row)
+            show_player_card("•", row, team_name)
     else:
         st.info("No impact players available")
 
@@ -2418,17 +2464,17 @@ if app_mode == "Single Team Analysis":
 
                     render_section_header("Starting XI", "🧾")
                     for i, row in xi.iterrows():
-                        show_player_card(f"{i+1}.", row)
+                        show_player_card(f"{i+1}.", row, selected_team)
 
                     render_section_header("Impact Options", "🎯")
                     for i, row in impact.iterrows():
-                        show_player_card(f"{i+1}.", row)
+                        show_player_card(f"{i+1}.", row, selected_team)
 
                     suggested = suggest_best_impact_options(xi, impact, innings_mode=innings_mode, top_n=2)
                     if not suggested.empty:
                         render_section_header(f"Ideal Impact Options ({single_team_mode.lower()})", "💡")
                         for i, row in suggested.iterrows():
-                            show_player_card(f"{i+1}.", row)
+                            show_player_card(f"{i+1}.", row, selected_team)
 
                     if projected_impact is not None:
                         render_text_box(
@@ -2446,7 +2492,7 @@ if app_mode == "Single Team Analysis":
 
                     render_section_header("Effective XI Used for Rating", "⚙️")
                     for i, row in effective_team.iterrows():
-                        show_player_card(f"{i+1}.", row)
+                        show_player_card(f"{i+1}.", row, selected_team)
 
                     if breakdown.get("Reasons"):
                         render_section_header("Rating Deductions", "⚠️")
@@ -2645,11 +2691,11 @@ elif app_mode == "Match Winner Prediction":
 
             left, right = st.columns(2)
             with left:
-                show_squad(f"{team1_name}", xi1, impact1)
+                show_squad(f"{team1_name}", xi1, impact1, team1_name)
                 if not impact1.empty:
                     show_impact_suggestions(team1_name, xi1, impact1, team1_mode)
             with right:
-                show_squad(f"{team2_name}", xi2, impact2)
+                show_squad(f"{team2_name}", xi2, impact2, team2_name)
                 if not impact2.empty:
                     show_impact_suggestions(team2_name, xi2, impact2, team2_mode)
         else:
