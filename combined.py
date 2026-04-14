@@ -723,7 +723,7 @@ def team_color_map(team_name):
         "CSK": ("#f9c80e", "#1e293b"),
         "MI": ("#2563eb", "#0f172a"),
         "RCB": ("#dc2626", "#111827"),
-        "KKR": ("#7c3aed", "#1f2937"),
+        "KKR": ("#7c3aed", "#d4af37"),
         "DC": ("#2563eb", "#dc2626"),
         "RR": ("#ec4899", "#1f2937"),
         "SRH": ("#f97316", "#111827"),
@@ -735,7 +735,7 @@ def team_color_map(team_name):
         "Mumbai Indians": ("#2563eb", "#0f172a"),
         "Royal Challengers Bangalore": ("#dc2626", "#111827"),
         "Royal Challengers Bengaluru": ("#dc2626", "#111827"),
-        "Kolkata Knight Riders": ("#7c3aed", "#1f2937"),
+        "Kolkata Knight Riders": ("#7c3aed", "#d4af37"),
         "Delhi Capitals": ("#2563eb", "#dc2626"),
         "Rajasthan Royals": ("#ec4899", "#1f2937"),
         "Sunrisers Hyderabad": ("#f97316", "#111827"),
@@ -2056,25 +2056,75 @@ def hybrid_prediction(hist_df, venue_df_local, team1_name, xi1, impact1, team2_n
 # ============================
 # SECTION HELPERS
 # ============================
+def build_grouped_player_options(team_df):
+    wk = team_df[team_df["Role"].apply(is_wicketkeeper)]["Name"].dropna().tolist()
+    bat = team_df[
+        team_df["Role"].apply(lambda x: is_batter(x) and not is_wicketkeeper(x))
+    ]["Name"].dropna().tolist()
+    ar = team_df[team_df["Role"].apply(is_all_rounder)]["Name"].dropna().tolist()
+    bowl = team_df[team_df["Role"].apply(is_bowler)]["Name"].dropna().tolist()
+
+    options = []
+
+    if wk:
+        options.append("── Wicket Keepers ──")
+        options.extend(wk)
+
+    if bat:
+        options.append("── Batters ──")
+        options.extend(bat)
+
+    if ar:
+        options.append("── All Rounders ──")
+        options.extend(ar)
+
+    if bowl:
+        options.append("── Bowlers ──")
+        options.extend(bowl)
+
+    return options
+
+
+def remove_group_headers(selected_list):
+    return [
+        x for x in selected_list
+        if not str(x).startswith("── ")
+    ]
+
 def manual_team_selection(team_name, full_df, key_prefix):
     squad_df = full_df[full_df["Team"] == team_name].copy().reset_index(drop=True)
     squad_df = prepare_team_df(squad_df)
 
     st.markdown(f"### {team_name} Squad Selection")
 
-    starting_players = st.multiselect(
+    starting_options = build_grouped_player_options(squad_df)
+
+    starting_players_raw = st.multiselect(
         f"Select exactly 11 starting players for {team_name}",
-        squad_df["Name"].tolist(),
+        starting_options,
         key=f"{key_prefix}_starting_players",
     )
+    starting_players = remove_group_headers(starting_players_raw)
 
-    remaining_pool = squad_df[~squad_df["Name"].isin(starting_players)]["Name"].tolist()
+    if len(starting_players) == 11:
+        st.success(f"{team_name}: Starting XI selected successfully.")
+    elif len(starting_players) > 11:
+        st.warning(f"{team_name}: You have selected more than 11 players for the Starting XI.")
 
-    impact_players_selected = st.multiselect(
+    remaining_df = squad_df[~squad_df["Name"].isin(starting_players)].copy()
+    impact_options = build_grouped_player_options(remaining_df)
+
+    impact_players_raw = st.multiselect(
         f"Select exactly 5 impact players for {team_name}",
-        remaining_pool,
+        impact_options,
         key=f"{key_prefix}_impact_players",
     )
+    impact_players_selected = remove_group_headers(impact_players_raw)
+
+    if len(impact_players_selected) == 5:
+        st.success(f"{team_name}: 5 impact players selected successfully.")
+    elif len(impact_players_selected) > 5:
+        st.warning(f"{team_name}: You have selected more than 5 impact players.")
 
     xi = pd.DataFrame()
     impact = pd.DataFrame()
@@ -2082,17 +2132,12 @@ def manual_team_selection(team_name, full_df, key_prefix):
     if len(starting_players) == 11:
         xi = squad_df.set_index("Name").loc[starting_players].reset_index()
         xi = prepare_team_df(xi)
-    elif len(starting_players) > 11:
-        st.error(f"Select only 11 starting players for {team_name}")
 
     if len(impact_players_selected) == 5:
         impact = squad_df.set_index("Name").loc[impact_players_selected].reset_index()
         impact = prepare_team_df(impact)
-    elif len(impact_players_selected) > 5:
-        st.error(f"Select only 5 impact players for {team_name}")
 
     return xi, impact
-
 
 def auto_best_team_for_match(team_name, full_df, venue_row=None):
     temp_df = full_df[full_df["Team"] == team_name].copy().reset_index(drop=True)
@@ -2707,12 +2752,12 @@ elif app_mode == "Match Winner Prediction":
 
             if not xi1.empty:
                 with left:
-                    show_squad(f"{team1_name} Selected Squad", xi1, impact1)
+                    show_squad(f"{team1_name} Selected Squad", xi1, impact1, team1_name)
                     if not impact1.empty and len(impact1)>=2:
                         show_impact_suggestions(team1_name, xi1, impact1, team1_mode)
             if not xi2.empty:
                 with right:
-                    show_squad(f"{team2_name} Selected Squad", xi2, impact2)
+                    show_squad(f"{team2_name} Selected Squad", xi2, impact2, team2_name)
                     if not impact2.empty and len(impact2)>=2:
                         show_impact_suggestions(team2_name, xi2, impact2, team2_mode)
 
